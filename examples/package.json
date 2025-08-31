@@ -1,0 +1,23 @@
+{
+  "name": "fast-api-example",
+  "version": "1.0.0",
+  "description": "An example project using the Fast API library.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "api": "fast-api"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/glob": "^8.1.0",
+    "@types/node": "^20.12.12",
+    "fast-api": "file:..",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "fast-api-config": {
+    "port": 5000,
+    "apiDir": "api",
+    "wildcardChar": "_"
+  }
+}

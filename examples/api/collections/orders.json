@@ -1,0 +1,55 @@
+{
+  "$schema": "https://www.google.com/search?q=http://json-schema.org/draft-07/schema%23",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "faker": {
+          "string": "uuid"
+        }
+      },
+      "userId": {
+        "type": "string",
+        "faker": {
+          "string": "uuid"
+        }
+      },
+      "productName": {
+        "type": "string",
+        "faker": {
+          "commerce": "productName"
+        }
+      },
+      "amount": {
+        "type": "number",
+        "faker": {
+          "commerce": "price"
+        }
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "shipped",
+          "delivered",
+          "cancelled"
+        ]
+      },
+      "createdAt": {
+        "type": "string",
+        "faker": {
+          "date": "past"
+        }
+      }
+    },
+    "required": [
+      "id",
+      "userId",
+      "productName",
+      "amount",
+      "status"
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://www.google.com/search?q=http://json-schema.org/draft-07/schema%23",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "faker": {
+          "string": "uuid"
+        }
+      },
+      "name": {
+        "type": "string",
+        "faker": {
+          "person": "fullName"
+        }
+      },
+      "email": {
+        "type": "string",
+        "faker": {
+          "internet": "email"
+        }
+      },
+      "username": {
+        "type": "string",
+        "faker": {
+          "internet": "userName"
+        }
+      },
+      "address": {
+        "type": "string",
+        "faker": {
+          "location": "streetAddress"
+        }
+      },
+      "bio": {
+        "type": "string",
+        "faker": {
+          "person": "bio"
+        }
+      },
+      "avatar": {
+        "type": "string",
+        "faker": {
+          "image": "avatar"
+        }
+      },
+      "birthdate": {
+        "type": "string",
+        "faker": {
+          "date": "birthdate"
+        }
+      }
+    },
+    "required": [
+      "id",
+      "name",
+      "email",
+      "username"
+    ]
+  }
+}

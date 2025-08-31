@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    /* Módulos e Ambiente */
+    "target": "ES2022", // Compila o código para uma versão moderna do ECMAScript.
+    "module": "ESNext", // Usa o sistema de módulo nativo do ES, ideal para o Vite.
+    "moduleResolution": "Bundler", // O modo mais recente e otimizado de resolução de módulos, recomendado para bundlers.
+
+    /* Análise de Código Estático */
+    "strict": true, // Habilita todas as opções de verificação de tipo rigorosa, essencial para a segurança do código.
+    "verbatimModuleSyntax": true, // Garante que a sintaxe de importação seja preservada, evitando importações indesejadas.
+    "noUnusedLocals": true, // Reporta erros para variáveis locais não utilizadas.
+    "noUnusedParameters": true, // Reporta erros para parâmetros de função não utilizados.
+    "forceConsistentCasingInFileNames": true, // Impede referências a arquivos com maiúsculas/minúsculas inconsistentes.
+    "types": ["vitest/globals"],
+    /* Configuração de caminhos */
+    "baseUrl": "./", // Define a base para a resolução de módulos não-relativos.
+    "paths": {
+      "@/*": ["src/*"] // Mapeia o alias @/ para o diretório src/, resolvendo o problema de importação.
+    },
+
+    /* Configurações Adicionais */
+    "lib": ["ES2022", "DOM"], // Inclui bibliotecas de definição de tipo para o JavaScript moderno e o ambiente do navegador.
+    "esModuleInterop": true, // Permite importar módulos CommonJS como módulos ES.
+    "skipLibCheck": true, // Melhora o desempenho ignorando a verificação de tipo de bibliotecas.
+    "isolatedModules": true, // Garante que cada arquivo seja um módulo isolado, o que é útil para ferramentas de build.
+    "resolveJsonModule": true, // Permite importar arquivos .json diretamente.
+    "declaration": true,
+    "declarationDir": "dist",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*", "src/vitest.d.ts"], // Inclui todos os arquivos na pasta src e a declaração de tipo do Vitest.
+  "exclude": ["node_modules", "dist"] // Exclui arquivos gerados e as dependências.
+}
