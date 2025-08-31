@@ -3,15 +3,15 @@ import express from 'express';
 /**
  * Interface para a estrutura das configurações da Fast API no package.json.
  */
-export interface FastApiConfig {
+export interface SimpleFakeApiConfig {
   port: number;
   apiDir: string;
   wildcardChar: string;
   collectionsDir: string;
 }
 
-export interface FastApi {
-  config: FastApiConfig;
+export interface SimpleFakeApi {
+  config: SimpleFakeApiConfig;
   app: express.Express;
   collections: object;
 }

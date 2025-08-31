@@ -1,5 +1,5 @@
 {
-  "name": "fast-api",
+  "name": "simple-fake-api",
   "version": "1.0.0",
   "description": "A Node.js library for creating fake APIs from file structure.",
   "main": "dist/index.js",
@@ -8,7 +8,7 @@
     ".": "./dist/index.js"
   },
   "bin": {
-    "fast-api": "./dist/cli.js"
+    "simple-fake-api": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
@@ -63,12 +63,12 @@
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/marco-pontes/fast-api.git"
+    "url": "git+https://github.com/marco-pontes/simple-fake-api.git"
   },
   "bugs": {
-    "url": "https://github.com/marco-pontes/fast-api/issues"
+    "url": "https://github.com/marco-pontes/simple-fake-api/issues"
   },
-  "homepage": "https://github.com/marco-pontes/fast-api#readme",
+  "homepage": "https://github.com/marco-pontes/simple-fake-api#readme",
   "engines": {
     "node": ">=18"
   },

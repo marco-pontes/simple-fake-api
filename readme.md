@@ -1,4 +1,4 @@
-# fast-api
+# simple-fake-api
 
 A small, fast file‑based fake API server for Node.js. Define endpoints by creating files in a folder (no codegen, no config files), and get realistic data using @faker-js/faker and json-schema-faker for collections.
 
@@ -15,7 +15,7 @@ A small, fast file‑based fake API server for Node.js. Define endpoints by crea
 - Install:
 
   ```bash
-  npm i fast-api
+  npm i simple-fake-api
   ```
 
 ## Quickstart (TL;DR)
@@ -23,7 +23,7 @@ A small, fast file‑based fake API server for Node.js. Define endpoints by crea
 1. Add config to your package.json
 
 ```jsonc
-"fast-api-config": {
+"simple-fake-api-config": {
   "port": 5000,
   "apiDir": "api",
   "collectionsDir": "collections",
@@ -56,7 +56,7 @@ export const get = (_req, res) => {
 }
 ```
 
-4. Add a script to start fast-api
+4. Add a script to start simple-fake-api
 
 ```jsonc
 {
@@ -94,10 +94,10 @@ Open <http://localhost:5000/ping>
 
 ## Configuration (package.json)
 
-Add a fast-api-config section to your package.json:
+Add a simple-fake-api-config section to your package.json:
 
 ```jsonc
-"fast-api-config": {
+"simple-fake-api-config": {
   "port": 5000,
   "apiDir": "api",
   "collectionsDir": "collections",
@@ -116,7 +116,7 @@ Configuration options and defaults:
 
 Notes:
 
-- You can override any of the above in your package.json under "fast-api-config".
+- You can override any of the above in your package.json under "simple-fake-api-config" (also backward compatible with "fast-api-config").
 - Example: with wildcardChar "\_", a file api/users/\_id.ts maps to GET /users/:id.
 
 ## URL mapping examples (5)
@@ -170,10 +170,10 @@ export const get = (req, res) => {
 
 ## Collections with json-schema-faker (4 examples)
 
-Place these JSON files under api/collections. On startup, fast-api generates arrays using JSON Schema Faker. In your handlers, use:
+Place these JSON files under api/collections. On startup, simple-fake-api generates arrays using JSON Schema Faker. In your handlers, use:
 
 ```ts
-import { getCollections } from 'fast-api';
+import { getCollections } from 'simple-fake-api';
 const { users, products, orders, comments } = getCollections();
 ```
 
@@ -252,7 +252,7 @@ By default fast-api generates 50 items per collection (configurable in code; sch
 Example: api/users/index.ts
 
 ```ts
-import { getCollections } from 'fast-api';
+import { getCollections } from 'simple-fake-api';
 
 export const get = (_req, res) => {
   const { users } = getCollections();
@@ -290,9 +290,9 @@ Example package.json (consumer project)
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "api": "node ./node_modules/fast-api/dist/index.js",
+    "api": "node ./node_modules/simple-fake-api/dist/index.js",
   },
-  "fast-api-config": {
+  "simple-fake-api-config": {
     "port": 5000,
     "apiDir": "api",
     "collectionsDir": "collections",
@@ -311,10 +311,10 @@ Notes
 
 ## Programmatic usage
 
-You can embed fast-api in another Node process (if you import from ESM):
+You can embed simple-fake-api in another Node process (if you import from ESM):
 
 ```ts
-import { initialize, start, getCollections } from 'fast-api';
+import { initialize, start, getCollections } from 'simple-fake-api';
 
 await initialize();
 

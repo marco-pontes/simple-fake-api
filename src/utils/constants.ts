@@ -1,10 +1,10 @@
-import type { FastApiConfig } from './types.js';
+import type { SimpleFakeApiConfig } from './types.js';
 
 /**
  * Configurações padrão para a Fast API.
  * Estas configurações serão usadas se não forem definidas no package.json.
  */
-export const DEFAULT_CONFIG: FastApiConfig = {
+export const DEFAULT_CONFIG: SimpleFakeApiConfig = {
   port: 5000,
   apiDir: 'api',
   wildcardChar: '_',

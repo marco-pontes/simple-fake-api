@@ -3,10 +3,10 @@ import express from 'express';
 import { loadConfig } from './config';
 import { addExpressRoutes, mapRoutes } from './routes';
 import { loadCollections } from './collections/index.js';
-import type { FastApi } from './utils/types';
+import type { SimpleFakeApi } from './utils/types';
 
-// Uma variável de escopo do módulo para armazenar a instância do FastApi após a inicialização.
-let fastApi: FastApi | null = null;
+// Uma variável de escopo do módulo para armazenar a instância do SimpleFakeApi após a inicialização.
+let fastApi: SimpleFakeApi | null = null;
 
 // Test-only helper to reset internal state between tests
 export const __resetForTests = () => {
@@ -16,7 +16,7 @@ export const __resetForTests = () => {
 export const getCollections = () => fastApi!.collections;
 
 /**
- * Inicializa a configuração e as rotas do servidor Fast API.
+ * Inicializa a configuração e as rotas do servidor Simple Fake API.
  * Esta função prepara o servidor, mas não o inicia.
  * * @returns {Promise<void>} Uma Promise que se resolve quando a inicialização estiver completa.
  */
@@ -36,7 +36,7 @@ export const initialize = async (): Promise<void> => {
 
     // Atribui a instância inicializada à variável global.
     fastApi = { config, app, collections };
-    console.log('Fast API foi inicializado com sucesso.');
+    console.log('Simple Fake API foi inicializado com sucesso.');
   } catch (error) {
     console.error('Falha ao inicializar o servidor:', error);
     // Em um ambiente de produção, você pode querer lançar o erro
@@ -46,7 +46,7 @@ export const initialize = async (): Promise<void> => {
 };
 
 /**
- * Inicia o servidor Fast API.
+ * Inicia o servidor Simple Fake API.
  * Esta função assume que a inicialização já foi concluída.
  * * @returns {void}
  */
@@ -61,7 +61,7 @@ export const start = (): void => {
 
   // Inicia o servidor Express.
   app.listen(config.port, () => {
-    console.log(`Servidor Fast API rodando na porta ${config.port}`);
+    console.log(`Servidor Simple Fake API rodando na porta ${config.port}`);
     console.log(`URL base: http://localhost:${config.port}`);
   });
 };
