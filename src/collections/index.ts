@@ -1,7 +1,7 @@
-import { generate } from '@/collections/data-generator';
+import { generate } from './data-generator.js';
 import fs from 'fs';
 import path from 'path';
-import type { DataCollections } from '@/utils/types';
+import type { DataCollections } from '../utils/types';
 
 // Armazena as coleções geradas em uma variável para evitar a regeneração
 // a cada chamada da função `getCollections`.

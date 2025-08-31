@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
-import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from '@/utils/constants';
-import type { FastApiConfig } from '@/utils/types';
+import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants.js';
+import type { FastApiConfig } from './utils/types';
 
 /**
  * Lê e valida as configurações da Fast API a partir do arquivo package.json.

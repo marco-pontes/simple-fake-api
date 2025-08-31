@@ -71,5 +71,8 @@
   "homepage": "https://github.com/marco-pontes/fast-api#readme",
   "engines": {
     "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

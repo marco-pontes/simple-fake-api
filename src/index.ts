@@ -2,7 +2,7 @@ import './bootstrap.js';
 import express from 'express';
 import { loadConfig } from './config';
 import { addExpressRoutes, mapRoutes } from './routes';
-import { loadCollections } from '@/collections';
+import { loadCollections } from './collections/index.js';
 import type { FastApi } from './utils/types';
 
 // Uma variável de escopo do módulo para armazenar a instância do FastApi após a inicialização.
