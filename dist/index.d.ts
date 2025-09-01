@@ -1,6 +1,7 @@
 import './bootstrap.js';
 export { create as http } from './http-client.js';
 export { loadHttpClientConfigFromPackageJson } from './utils/pkg.js';
+export type { Request, Response } from 'express';
 export declare const __resetForTests: () => void;
 export declare const getCollections: () => object;
 /**

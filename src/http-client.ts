@@ -10,7 +10,8 @@ import type {
   CreateOptions,
   Client,
 } from './utils/types.js';
-
+// New public API: create(endpointName, options?) which reads config from package.json
+import { loadHttpClientConfigFromPackageJson } from './utils/pkg.js';
 // Re-export the Client type for consumers importing from the http subpath
 export type { Client } from './utils/types.js';
 
@@ -93,8 +94,7 @@ const buildFactory = (config: HttpClientConfig) => {
   return { create };
 };
 
-// New public API: create(endpointName, options?) which reads config from package.json
-import { loadHttpClientConfigFromPackageJson } from './utils/pkg.js';
+
 export function create(endpointName: string, options?: CreateOptions, customPackageJsonPath?: string): Client {
   const cfg = loadHttpClientConfigFromPackageJson(customPackageJsonPath);
   const factory = buildFactory(cfg);

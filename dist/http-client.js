@@ -1,6 +1,8 @@
 // Lightweight HTTP client factory with environment-aware base URLs
 // Usage in consumer: import { http } from '@marco-pontes/simple-fake-api/http'
 // or: import { httpClient } from '@marco-pontes/simple-fake-api'
+// New public API: create(endpointName, options?) which reads config from package.json
+import { loadHttpClientConfigFromPackageJson } from './utils/pkg.js';
 /**
  * Resolve current environment name for selecting endpoint configuration.
  * Priority: config.resolveEnv() -> NODE_ENV (prod/staging/test) -> dev
@@ -75,8 +77,6 @@ const buildFactory = (config) => {
     }
     return { create };
 };
-// New public API: create(endpointName, options?) which reads config from package.json
-import { loadHttpClientConfigFromPackageJson } from './utils/pkg.js';
 export function create(endpointName, options, customPackageJsonPath) {
     const cfg = loadHttpClientConfigFromPackageJson(customPackageJsonPath);
     const factory = buildFactory(cfg);

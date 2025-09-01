@@ -8,10 +8,9 @@
     "api": "simple-fake-api"
   },
   "dependencies": {
-    "@marco-pontes/simple-fake-api": "^1.0.9"
+    "@marco-pontes/simple-fake-api": "^1.0.10"
   },
   "devDependencies": {
-    "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
