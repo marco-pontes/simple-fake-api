@@ -331,7 +331,7 @@ Configuration in your package.json (consumer project):
   "simple-fake-api-http": {
     "endpoints": {
       "api-server": {
-        "dev": { "baseUrl": "http://localhost:5000", "headers": { } },
+        "dev": { "baseUrl": "http://localhost:5000" },
         "staging": { "baseUrl": "https://staging.endpoint.com" },
         "prod": { "baseUrl": "https://prod.endpoint.com" }
       }
