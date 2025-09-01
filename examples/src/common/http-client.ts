@@ -2,9 +2,9 @@
 // It reads configuration from your package.json under "simple-fake-api-config.http".
 // See examples/package.json for the configured endpoints.
 
-import { create } from '@marco-pontes/simple-fake-api/http';
+import { create, Client } from '@marco-pontes/simple-fake-api/http';
 
-export const httpClient = () => {
+export const httpClient: () => Client = () => {
   // Uses the endpoint named "api-server" from the package.json config
   return create('api-server');
 };

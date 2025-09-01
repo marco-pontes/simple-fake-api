@@ -11,6 +11,9 @@ import type {
   Client,
 } from './utils/types.js';
 
+// Re-export the Client type for consumers importing from the http subpath
+export type { Client } from './utils/types.js';
+
 /**
  * Resolve current environment name for selecting endpoint configuration.
  * Priority: config.resolveEnv() -> NODE_ENV (prod/staging/test) -> dev
