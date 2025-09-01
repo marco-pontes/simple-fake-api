@@ -14,6 +14,8 @@ import type {
 import { loadHttpClientConfigFromPackageJson } from './utils/pkg.js';
 // Re-export the Client type for consumers importing from the http subpath
 export type { Client } from './utils/types.js';
+// Also re-export Express Request/Response types from the http subpath
+export type { Request, Response } from 'express';
 
 /**
  * Resolve current environment name for selecting endpoint configuration.

@@ -8,7 +8,7 @@
     "api": "simple-fake-api"
   },
   "dependencies": {
-    "@marco-pontes/simple-fake-api": "^1.0.10"
+    "@marco-pontes/simple-fake-api": "^1.0.11"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
