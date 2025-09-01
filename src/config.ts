@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants';
+import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants.js';
 import type { SimpleFakeApiConfig } from './utils/types';
 
 /**

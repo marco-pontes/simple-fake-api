@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants';
+import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants.js';
 /**
  * Lê e valida as configurações da Simple Fake API a partir do arquivo package.json.
  * @returns {SimpleFakeApiConfig} O objeto de configuração validado.
