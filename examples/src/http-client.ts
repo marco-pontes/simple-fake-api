@@ -8,11 +8,3 @@ export const httpClient = () => {
   // Uses the endpoint named "api-server" from the package.json config
   return create('api-server');
 };
-
-// Example function using the client
-export async function fetchUsers() {
-  const api = httpClient();
-  const res = await api.get('/users');
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  return res.json();
-}
