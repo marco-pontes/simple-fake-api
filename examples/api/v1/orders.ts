@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { getCollections } from 'fast-api';
+import { getCollections } from '@marco-pontes/simple-fake-api';
 
 export const get = async (req: Request, res: Response) => {
     const { orders }: any = getCollections();
