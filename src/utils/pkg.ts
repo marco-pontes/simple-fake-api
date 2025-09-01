@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import type { SimpleFakeApiConfig } from './types.js';
+import type { SimpleFakeApiConfig } from '../types.js';
 
 export function readPackageJson(customPackageJsonPath?: string): any | undefined {
   try {
@@ -30,7 +30,7 @@ export function readSimpleFakeApiConfig(customPackageJsonPath?: string): SimpleF
   return pkg['simple-fake-api-config'] as SimpleFakeApiConfig | undefined;
 }
 
-import type { PackageJsonHttpSection } from './types.js';
+import type { PackageJsonHttpSection } from '../types.js';
 
 export function readSimpleFakeApiHttpConfig(customPackageJsonPath?: string): PackageJsonHttpSection | undefined {
   const pkg = readPackageJson(customPackageJsonPath);

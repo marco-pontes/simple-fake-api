@@ -1,6 +1,11 @@
 // Lightweight HTTP client factory with environment-aware base URLs
 // Usage in consumer: import { http } from '@marco-pontes/simple-fake-api/http'
 // or: import { httpClient } from '@marco-pontes/simple-fake-api'
+import { readSimpleFakeApiHttpConfig } from './utils/pkg.js';
+/**
+ * Resolve current environment name for selecting endpoint configuration.
+ * Priority: config.resolveEnv() -> NODE_ENV (prod/staging/test) -> dev
+ */
 const pickEnv = (cfg) => {
     if (cfg.resolveEnv)
         return cfg.resolveEnv();
@@ -13,11 +18,13 @@ const pickEnv = (cfg) => {
         return 'test';
     return 'dev';
 };
+/** Join base URL and path, ensuring single slash between. */
 const joinUrl = (base, path) => {
     const b = base.replace(/\/$/, '');
     const p = path.replace(/^\//, '');
     return `${b}/${p}`;
 };
+/** Build RequestInit for JSON body if a plain object/string is provided. */
 const asJsonInit = (body, init) => {
     const headers = new Headers(init?.headers || {});
     if (body !== undefined && body !== null && !(body instanceof FormData)) {
@@ -27,6 +34,10 @@ const asJsonInit = (body, init) => {
     }
     return { ...init, headers, body };
 };
+/**
+ * Create an HTTP client factory bound to the given configuration.
+ * Use factory.create(endpointName) to obtain a client with helpers for HTTP verbs.
+ */
 export const http = (config) => {
     const env = pickEnv(config);
     function create(endpointName, options) {
@@ -39,7 +50,11 @@ export const http = (config) => {
         const baseHeaders = { ...(envCfg.headers || {}), ...(options?.headers || {}) };
         const request = async (method, path, init) => {
             const url = joinUrl(envCfg.baseUrl, path);
-            const headers = new Headers({ ...baseHeaders, ...init?.headers });
+            // Merge baseHeaders with any provided init.headers. Use Headers API to preserve existing values
+            const headers = new Headers(baseHeaders);
+            if (init?.headers) {
+                new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+            }
             const rInit = { ...init, method, headers };
             return fetch(url, rInit);
         };
@@ -63,10 +78,13 @@ export const http = (config) => {
 // Convenience export to align with the described usage in the issue
 export const client = { create: (...args) => http(...args) };
 // ---- Package.json-based configuration loader ----
-import { readSimpleFakeApiHttpConfig } from './utils/pkg.js';
 /**
  * Loads HTTP client configuration from the consumer project's package.json key:
  * "simple-fake-api-config.http" (http client config nested under the main simple-fake-api-config)
+ */
+/**
+ * Load HTTP client configuration from the consumer project's package.json key:
+ * simple-fake-api-config.http (nested under the main simple-fake-api-config section).
  */
 export function loadHttpClientConfigFromPackageJson(customPackageJsonPath) {
     try {
@@ -93,6 +111,7 @@ export function loadHttpClientConfigFromPackageJson(customPackageJsonPath) {
  *   import { http } from '@marco-pontes/simple-fake-api/http';
  *   const { create } = http.fromPackageJson();
  */
+/** Convenience helper to create the http factory using package.json config. */
 export function httpFromPackageJson(customPackageJsonPath) {
     const cfg = loadHttpClientConfigFromPackageJson(customPackageJsonPath);
     return http(cfg);

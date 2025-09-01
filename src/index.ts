@@ -3,7 +3,7 @@ import express from 'express';
 import { loadConfig } from './config.js';
 import { addExpressRoutes, mapRoutes } from './routes.js';
 import { loadCollections } from './collections/index.js';
-import type { SimpleFakeApi } from './utils/types';
+import type { SimpleFakeApi } from './types.js';
 export { http as httpClientFactory, client as http } from './http-client.js';
 export { httpFromPackageJson, loadHttpClientConfigFromPackageJson } from './http-client.js';
 

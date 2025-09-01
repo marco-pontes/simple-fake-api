@@ -1,5 +1,5 @@
 import type { Express } from 'express';
-import type { RouteDefinition } from './utils/types';
+import type { RouteDefinition } from './types.js';
 /**
  * Mapeia arquivos JavaScript/TypeScript para definições de rota, separando-os
  * em rotas literais e rotas com parâmetros para garantir a ordem correta.

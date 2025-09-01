@@ -6,13 +6,3 @@
  * Ao garantir que 'location' esteja sempre presente, evitamos o erro
  * "ReferenceError: location is not defined" em tempo de execução.
  */
-interface GlobalLocation {
-    href: string;
-    protocol: string;
-    host: string;
-    hostname: string;
-    port: string;
-    pathname: string;
-    search: string;
-    hash: string;
-}

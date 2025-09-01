@@ -1,5 +1,5 @@
 import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants.js';
-import type { SimpleFakeApiConfig } from './utils/types';
+import type { SimpleFakeApiConfig } from './types.js';
 import { readSimpleFakeApiConfig } from './utils/pkg.js';
 
 /**

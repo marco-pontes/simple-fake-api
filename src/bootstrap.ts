@@ -7,16 +7,6 @@
  * "ReferenceError: location is not defined" em tempo de execução.
  */
 // Define uma interface para o objeto global 'location' que o TypeScript pode reconhecer.
-interface GlobalLocation {
-  href: string;
-  protocol: string;
-  host: string;
-  hostname: string;
-  port: string;
-  pathname: string;
-  search: string;
-  hash: string;
-}
 
 // Verifica se o objeto 'location' existe no escopo global.
 if (typeof globalThis.location === 'undefined') {

@@ -2,45 +2,20 @@
 // Usage in consumer: import { http } from '@marco-pontes/simple-fake-api/http'
 // or: import { httpClient } from '@marco-pontes/simple-fake-api'
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
+import type {
+  HttpMethod,
+  EndpointConfig,
+  HttpClientConfig,
+  Environment,
+  CreateOptions,
+  Client,
+} from './types.js';
+import { readSimpleFakeApiHttpConfig } from './utils/pkg.js';
 
-export interface EndpointConfig {
-  baseUrl: string;
-  headers?: Record<string, string>;
-}
-
-export interface HttpClientConfig {
-  endpoints: Record<string, {
-    dev: EndpointConfig;
-    prod?: EndpointConfig;
-    staging?: EndpointConfig;
-    test?: EndpointConfig;
-    default?: keyof EnvironmentMap;
-  }>;
-  // Environment resolver allows consumers to override via code if needed
-  resolveEnv?: () => keyof EnvironmentMap;
-}
-
-export type Environment = 'dev' | 'prod' | 'staging' | 'test';
-export type EnvironmentMap = Record<Environment, EndpointConfig>;
-
-export interface CreateOptions {
-  headers?: Record<string, string>;
-}
-
-export interface Client {
-  get: (path: string, init?: RequestInit) => Promise<Response>;
-  post: (path: string, body?: any, init?: RequestInit) => Promise<Response>;
-  put: (path: string, body?: any, init?: RequestInit) => Promise<Response>;
-  patch: (path: string, body?: any, init?: RequestInit) => Promise<Response>;
-  delete: (path: string, init?: RequestInit) => Promise<Response>;
-  head: (path: string, init?: RequestInit) => Promise<Response>;
-  options: (path: string, init?: RequestInit) => Promise<Response>;
-  request: (method: HttpMethod, path: string, init?: RequestInit) => Promise<Response>;
-  baseUrl: string;
-  headers: Record<string, string>;
-}
-
+/**
+ * Resolve current environment name for selecting endpoint configuration.
+ * Priority: config.resolveEnv() -> NODE_ENV (prod/staging/test) -> dev
+ */
 const pickEnv = (cfg: HttpClientConfig): Environment => {
   if (cfg.resolveEnv) return cfg.resolveEnv();
   const nodeEnv = (process.env.NODE_ENV || '').toLowerCase();
@@ -50,12 +25,14 @@ const pickEnv = (cfg: HttpClientConfig): Environment => {
   return 'dev';
 };
 
+/** Join base URL and path, ensuring single slash between. */
 const joinUrl = (base: string, path: string) => {
   const b = base.replace(/\/$/, '');
   const p = path.replace(/^\//, '');
   return `${b}/${p}`;
 };
 
+/** Build RequestInit for JSON body if a plain object/string is provided. */
 const asJsonInit = (body: any, init?: RequestInit): RequestInit => {
   const headers = new Headers(init?.headers || {});
   if (body !== undefined && body !== null && !(body instanceof FormData)) {
@@ -65,6 +42,10 @@ const asJsonInit = (body: any, init?: RequestInit): RequestInit => {
   return { ...init, headers, body };
 };
 
+/**
+ * Create an HTTP client factory bound to the given configuration.
+ * Use factory.create(endpointName) to obtain a client with helpers for HTTP verbs.
+ */
 export const http = (config: HttpClientConfig) => {
   const env = pickEnv(config);
   function create(endpointName: string, options?: CreateOptions): Client {
@@ -78,7 +59,11 @@ export const http = (config: HttpClientConfig) => {
 
     const request = async (method: HttpMethod, path: string, init?: RequestInit) => {
       const url = joinUrl(envCfg.baseUrl, path);
-      const headers = new Headers({ ...baseHeaders, ...(init?.headers as any) });
+      // Merge baseHeaders with any provided init.headers. Use Headers API to preserve existing values
+      const headers = new Headers(baseHeaders as any);
+      if (init?.headers) {
+        new Headers(init.headers as any).forEach((value, key) => headers.set(key, value));
+      }
       const rInit = { ...init, method, headers } as RequestInit;
       return fetch(url, rInit);
     };
@@ -109,12 +94,14 @@ export const http = (config: HttpClientConfig) => {
 export const client = { create: (...args: any[]) => (http as any)(...args) } as any;
 
 // ---- Package.json-based configuration loader ----
-import { readSimpleFakeApiHttpConfig } from './utils/pkg.js';
-
 
 /**
  * Loads HTTP client configuration from the consumer project's package.json key:
  * "simple-fake-api-config.http" (http client config nested under the main simple-fake-api-config)
+ */
+/**
+ * Load HTTP client configuration from the consumer project's package.json key:
+ * simple-fake-api-config.http (nested under the main simple-fake-api-config section).
  */
 export function loadHttpClientConfigFromPackageJson(customPackageJsonPath?: string): HttpClientConfig {
   try {
@@ -141,6 +128,7 @@ export function loadHttpClientConfigFromPackageJson(customPackageJsonPath?: stri
  *   import { http } from '@marco-pontes/simple-fake-api/http';
  *   const { create } = http.fromPackageJson();
  */
+/** Convenience helper to create the http factory using package.json config. */
 export function httpFromPackageJson(customPackageJsonPath?: string) {
   const cfg = loadHttpClientConfigFromPackageJson(customPackageJsonPath);
   return http(cfg);
