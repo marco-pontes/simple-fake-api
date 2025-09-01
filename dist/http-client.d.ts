@@ -34,3 +34,21 @@ export declare const http: (config: HttpClientConfig) => {
     create: (endpointName: string, options?: CreateOptions) => Client;
 };
 export declare const client: any;
+export interface PackageJsonHttpSection {
+    endpoints: HttpClientConfig['endpoints'];
+    resolveEnv?: HttpClientConfig['resolveEnv'];
+}
+/**
+ * Loads HTTP client configuration from the consumer project's package.json key:
+ * "simple-fake-api-http"
+ */
+export declare function loadHttpClientConfigFromPackageJson(customPackageJsonPath?: string): HttpClientConfig;
+/**
+ * Convenience helper to create the http factory using package.json config.
+ * Usage:
+ *   import { http } from '@marco-pontes/simple-fake-api/http';
+ *   const { create } = http.fromPackageJson();
+ */
+export declare function httpFromPackageJson(customPackageJsonPath?: string): {
+    create: (endpointName: string, options?: CreateOptions) => Client;
+};

@@ -320,38 +320,54 @@ Notes
 ### New: Environment-aware HTTP client for front-end apps
 
 - Import factory directly from the subpath export:
-  - import { http as client } from '@marco-pontes/simple-fake-api/http'
+  - import { http } from '@marco-pontes/simple-fake-api/http'
 - Or via main export re-exports:
-  - import { http as client } from '@marco-pontes/simple-fake-api'
+  - import { http } from '@marco-pontes/simple-fake-api'
 
-Example configuration and usage:
+Configuration in your package.json (consumer project):
+
+```jsonc
+{
+  "simple-fake-api-http": {
+    "endpoints": {
+      "api-server": {
+        "dev": { "baseUrl": "http://localhost:5000", "headers": { } },
+        "staging": { "baseUrl": "https://staging.endpoint.com" },
+        "prod": { "baseUrl": "https://prod.endpoint.com" }
+      }
+    }
+  }
+}
+```
+
+Usage (auto-load from package.json):
 
 ```ts
-import { http as client } from '@marco-pontes/simple-fake-api/http';
+import { http, httpFromPackageJson } from '@marco-pontes/simple-fake-api/http';
 
-const cfg = {
+// Option A (recommended): load config automatically from package.json
+const { create } = http.fromPackageJson(); // or: const { create } = httpFromPackageJson();
+const api = create('api-server', { headers: { /* auth, etc. */ } });
+
+// Option B: pass config programmatically if you prefer
+const api2 = http({
   endpoints: {
     'api-server': {
-      dev: { baseUrl: 'http://localhost:5000', headers: { } },
+      dev: { baseUrl: 'http://localhost:5000' },
       prod: { baseUrl: 'https://prod.endpoint.com' },
       staging: { baseUrl: 'https://staging.endpoint.com' },
     },
   },
-};
+}).create('api-server');
 
-export const httpClient = () => {
-  return client(cfg).create('api-server', { headers: { /* auth, etc. */ } });
-};
-
-// usage:
-// const api = httpClient();
+// usage
 // const res = await api.get('/users');
 // const created = await api.post('/users', { name: 'John' });
 ```
 
 Environment resolution:
 - Defaults to dev when NODE_ENV is not set.
-- test -> test, staging -> staging, production/prod -> prod. You can also pass resolveEnv in config.
+- test -> test, staging -> staging, production/prod -> prod. You can also pass resolveEnv in config or in package.json via "simple-fake-api-http.resolveEnv" (function not serializable; prefer NODE_ENV).
 
 You can embed simple-fake-api in another Node process (if you import from ESM):
 

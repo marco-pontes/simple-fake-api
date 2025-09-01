@@ -5,6 +5,7 @@ import { addExpressRoutes, mapRoutes } from './routes.js';
 import { loadCollections } from './collections/index.js';
 import type { SimpleFakeApi } from './utils/types';
 export { http as httpClientFactory, client as http } from './http-client.js';
+export { httpFromPackageJson, loadHttpClientConfigFromPackageJson } from './http-client.js';
 
 // Uma variável de escopo do módulo para armazenar a instância do SimpleFakeApi após a inicialização.
 let fastApi: SimpleFakeApi | null = null;

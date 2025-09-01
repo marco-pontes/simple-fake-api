@@ -107,3 +107,54 @@ export const http = (config: HttpClientConfig) => {
 
 // Convenience export to align with the described usage in the issue
 export const client = { create: (...args: any[]) => (http as any)(...args) } as any;
+
+// ---- Package.json-based configuration loader ----
+import fs from 'fs';
+import path from 'path';
+
+export interface PackageJsonHttpSection {
+  endpoints: HttpClientConfig['endpoints'];
+  resolveEnv?: HttpClientConfig['resolveEnv'];
+}
+
+/**
+ * Loads HTTP client configuration from the consumer project's package.json key:
+ * "simple-fake-api-http"
+ */
+export function loadHttpClientConfigFromPackageJson(customPackageJsonPath?: string): HttpClientConfig {
+  const cwd = process.cwd();
+  const packageJsonPath = customPackageJsonPath || path.join(cwd, 'package.json');
+  try {
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as any;
+    const section: PackageJsonHttpSection | undefined = pkg['simple-fake-api-http'];
+    if (!section) {
+      throw new Error('Key "simple-fake-api-http" not found in package.json');
+    }
+    if (!section.endpoints || typeof section.endpoints !== 'object') {
+      throw new Error('Invalid "simple-fake-api-http": missing endpoints');
+    }
+    return {
+      endpoints: section.endpoints,
+      resolveEnv: section.resolveEnv,
+    };
+  } catch (e: any) {
+    const msg = `simple-fake-api/http: unable to load configuration from package.json (${e?.message || e})`;
+    throw new Error(msg);
+  }
+}
+
+/**
+ * Convenience helper to create the http factory using package.json config.
+ * Usage:
+ *   import { http } from '@marco-pontes/simple-fake-api/http';
+ *   const { create } = http.fromPackageJson();
+ */
+export function httpFromPackageJson(customPackageJsonPath?: string) {
+  const cfg = loadHttpClientConfigFromPackageJson(customPackageJsonPath);
+  return http(cfg);
+}
+
+// Also expose as a property for ergonomic access
+// (typing of this dynamic property is not enforced, but .d.ts will expose the named function)
+// @ts-ignore
+(http as any).fromPackageJson = (customPackageJsonPath?: string) => http(loadHttpClientConfigFromPackageJson(customPackageJsonPath));
