@@ -9,8 +9,8 @@ vi.mock('./utils/pkg.js', async () => {
             },
         },
     }));
-    const loadHttpClientConfigFromPackageJson = (customPackageJsonPath) => {
-        const section = readSimpleFakeApiHttpConfig(customPackageJsonPath);
+    const loadHttpClientConfigFromPackageJson = () => {
+        const section = readSimpleFakeApiHttpConfig();
         if (!section || !section.endpoints) {
             throw new Error('Key "simple-fake-api-config.http" not found in package.json');
         }
