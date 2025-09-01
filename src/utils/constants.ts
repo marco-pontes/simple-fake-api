@@ -1,4 +1,4 @@
-import type { SimpleFakeApiConfig } from '../types.js';
+import type { SimpleFakeApiConfig } from './types.js';
 
 /**
  * Configurações padrão para a Fast API.

@@ -1,21 +1,31 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // Mock the pkg util for the specific tests that use fromPackageJson
-vi.mock('./utils/pkg', async () => {
-  return {
-    readSimpleFakeApiHttpConfig: vi.fn(() => ({
-      endpoints: {
-        'api': {
-          dev: { baseUrl: 'http://dev.example' },
-          prod: { baseUrl: 'https://prod.example' },
-        },
+vi.mock('./utils/pkg.js', async () => {
+  const readSimpleFakeApiHttpConfig = vi.fn(() => ({
+    endpoints: {
+      'api': {
+        dev: { baseUrl: 'http://dev.example' },
+        prod: { baseUrl: 'https://prod.example' },
       },
-    })),
+    },
+  }));
+  const loadHttpClientConfigFromPackageJson = (customPackageJsonPath?: string) => {
+    const section: any = readSimpleFakeApiHttpConfig(customPackageJsonPath);
+    if (!section || !section.endpoints) {
+      throw new Error('Key "simple-fake-api-config.http" not found in package.json');
+    }
+    return { endpoints: section.endpoints } as any;
+  };
+  return {
+    readSimpleFakeApiHttpConfig,
+    loadHttpClientConfigFromPackageJson,
   };
 });
 
 // Import after mocks
-import { http, httpFromPackageJson, loadHttpClientConfigFromPackageJson } from './http-client';
+import { create } from './http-client';
+import { loadHttpClientConfigFromPackageJson } from './utils/pkg.js';
 
 const originalEnv = { ...process.env };
 let fetchSpy: any;
@@ -34,16 +44,12 @@ describe('http-client', () => {
 
   it('uses dev by default when NODE_ENV not set', async () => {
     delete process.env.NODE_ENV;
-    const cfg = {
-      endpoints: {
-        api: {
-          dev: { baseUrl: 'http://localhost:5000' },
-          prod: { baseUrl: 'https://prod' },
-        },
-      },
-    } as const;
+    // Simulate config via package.json by mocking loader
+    const mod = await import('./utils/pkg.js');
+    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce({
+      endpoints: { api: { dev: { baseUrl: 'http://localhost:5000' }, prod: { baseUrl: 'https://prod' } } },
+    });
 
-    const { create } = http(cfg as any);
     const client = create('api');
     await client.get('/users');
     expect(fetchSpy).toHaveBeenCalledWith('http://localhost:5000/users', expect.objectContaining({ method: 'GET' }));
@@ -51,28 +57,21 @@ describe('http-client', () => {
 
   it('picks prod when NODE_ENV=production', async () => {
     process.env.NODE_ENV = 'production';
-    const cfg = {
-      endpoints: {
-        api: {
-          dev: { baseUrl: 'http://dev' },
-          prod: { baseUrl: 'https://prod' },
-        },
-      },
-    };
-    const client = http(cfg as any).create('api');
+    const mod = await import('./utils/pkg.js');
+    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce({
+      endpoints: { api: { dev: { baseUrl: 'http://dev' }, prod: { baseUrl: 'https://prod' } } },
+    });
+    const client = create('api');
     await client.get('/ping');
     expect(fetchSpy).toHaveBeenCalledWith('https://prod/ping', expect.objectContaining({ method: 'GET' }));
   });
 
   it('merges headers from env config and per-client options', async () => {
-    const cfg = {
-      endpoints: {
-        api: {
-          dev: { baseUrl: 'http://dev', headers: { Authorization: 'Bearer A' } },
-        },
-      },
-    };
-    const client = http(cfg as any).create('api', { headers: { 'X-Trace': 't1' } });
+    const mod = await import('./utils/pkg');
+    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce({
+      endpoints: { api: { dev: { baseUrl: 'http://dev', headers: { Authorization: 'Bearer A' } } } },
+    });
+    const client = create('api', { headers: { 'X-Trace': 't1' } });
     await client.get('/r');
     const [, init] = fetchSpy.mock.calls[0];
     const headers = new Headers((init as any).headers);
@@ -81,8 +80,9 @@ describe('http-client', () => {
   });
 
   it('post/put/patch use JSON content-type when body is object', async () => {
-    const cfg = { endpoints: { api: { dev: { baseUrl: 'http://dev' } } } };
-    const client = http(cfg as any).create('api');
+    const mod = await import('./utils/pkg.js');
+    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce({ endpoints: { api: { dev: { baseUrl: 'http://dev' } } } });
+    const client = create('api');
 
     await client.post('/users', { a: 1 });
     await client.put('/users/1', { b: 2 });
@@ -96,23 +96,22 @@ describe('http-client', () => {
     }
   });
 
-  it('throws when endpoint name not found', () => {
-    const cfg = { endpoints: {} } as any;
-    const factory = http(cfg);
-    expect(() => factory.create('missing')).toThrow(/endpoint "missing" not found/);
+  it('throws when endpoint name not found', async () => {
+    const mod = await import('./utils/pkg.js');
+    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce({ endpoints: {} });
+    expect(() => create('missing')).toThrow(/endpoint "missing" not found/);
   });
 
-  it('httpFromPackageJson loads config via pkg util and creates client', async () => {
-    const factory = httpFromPackageJson();
-    const client = factory.create('api');
+  it('create loads config via pkg util and creates client', async () => {
+    const client = create('api');
     await client.get('/ok');
     expect(fetchSpy).toHaveBeenCalledWith('http://dev.example/ok', expect.any(Object));
   });
 
   it('loadHttpClientConfigFromPackageJson throws when section missing', async () => {
     // remock to return undefined
-    const mod = await import('./utils/pkg');
-    mod.readSimpleFakeApiHttpConfig.mockReturnValueOnce(undefined);
+    const mod = await import('./utils/pkg.js');
+    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce(undefined);
     expect(() => loadHttpClientConfigFromPackageJson()).toThrow(/not found/);
   });
 });

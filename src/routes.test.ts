@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import path from 'path';
 import { mapRoutes, addExpressRoutes } from './routes';
-import type { RouteDefinition } from './types';
+import type { RouteDefinition } from './utils/types';
 import { glob } from 'glob';
 import fs from 'fs';
 

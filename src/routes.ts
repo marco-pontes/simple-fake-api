@@ -1,7 +1,7 @@
 import type { Express } from 'express';
 import { glob } from 'glob';
 import path from 'path';
-import type { RouteDefinition, RouteHandlers } from './types.js';
+import type { RouteDefinition, RouteHandlers } from './utils/types.js';
 
 /**
  * Mapeia arquivos JavaScript/TypeScript para definições de rota, separando-os

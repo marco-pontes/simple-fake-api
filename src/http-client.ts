@@ -9,8 +9,7 @@ import type {
   Environment,
   CreateOptions,
   Client,
-} from './types.js';
-import { readSimpleFakeApiHttpConfig } from './utils/pkg.js';
+} from './utils/types.js';
 
 /**
  * Resolve current environment name for selecting endpoint configuration.
@@ -46,7 +45,8 @@ const asJsonInit = (body: any, init?: RequestInit): RequestInit => {
  * Create an HTTP client factory bound to the given configuration.
  * Use factory.create(endpointName) to obtain a client with helpers for HTTP verbs.
  */
-export const http = (config: HttpClientConfig) => {
+// Internal builder to create a client from a resolved config
+const buildFactory = (config: HttpClientConfig) => {
   const env = pickEnv(config);
   function create(endpointName: string, options?: CreateOptions): Client {
     const def = config.endpoints[endpointName];
@@ -90,51 +90,10 @@ export const http = (config: HttpClientConfig) => {
   return { create };
 };
 
-// Convenience export to align with the described usage in the issue
-export const client = { create: (...args: any[]) => (http as any)(...args) } as any;
-
-// ---- Package.json-based configuration loader ----
-
-/**
- * Loads HTTP client configuration from the consumer project's package.json key:
- * "simple-fake-api-config.http" (http client config nested under the main simple-fake-api-config)
- */
-/**
- * Load HTTP client configuration from the consumer project's package.json key:
- * simple-fake-api-config.http (nested under the main simple-fake-api-config section).
- */
-export function loadHttpClientConfigFromPackageJson(customPackageJsonPath?: string): HttpClientConfig {
-  try {
-    const section = readSimpleFakeApiHttpConfig(customPackageJsonPath);
-    if (!section) {
-      throw new Error('Key "simple-fake-api-config.http" not found in package.json');
-    }
-    if (!section.endpoints || typeof section.endpoints !== 'object') {
-      throw new Error('Invalid "simple-fake-api-config.http": missing endpoints');
-    }
-    return {
-      endpoints: section.endpoints,
-      resolveEnv: section.resolveEnv,
-    };
-  } catch (e: any) {
-    const msg = `simple-fake-api/http: unable to load configuration from package.json (${e?.message || e})`;
-    throw new Error(msg);
-  }
-}
-
-/**
- * Convenience helper to create the http factory using package.json config.
- * Usage:
- *   import { http } from '@marco-pontes/simple-fake-api/http';
- *   const { create } = http.fromPackageJson();
- */
-/** Convenience helper to create the http factory using package.json config. */
-export function httpFromPackageJson(customPackageJsonPath?: string) {
+// New public API: create(endpointName, options?) which reads config from package.json
+import { loadHttpClientConfigFromPackageJson } from './utils/pkg.js';
+export function create(endpointName: string, options?: CreateOptions, customPackageJsonPath?: string): Client {
   const cfg = loadHttpClientConfigFromPackageJson(customPackageJsonPath);
-  return http(cfg);
+  const factory = buildFactory(cfg);
+  return factory.create(endpointName, options);
 }
-
-// Also expose as a property for ergonomic access
-// (typing of this dynamic property is not enforced, but .d.ts will expose the named function)
-// @ts-ignore
-(http as any).fromPackageJson = (customPackageJsonPath?: string) => http(loadHttpClientConfigFromPackageJson(customPackageJsonPath));

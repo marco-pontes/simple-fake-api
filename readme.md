@@ -319,10 +319,8 @@ Notes
 
 ### New: Environment-aware HTTP client for front-end apps
 
-- Import factory directly from the subpath export:
-  - import { http } from '@marco-pontes/simple-fake-api/http'
-- Or via main export re-exports:
-  - import { http } from '@marco-pontes/simple-fake-api'
+- Import the HTTP client creator from the subpath export:
+  - import { create } from '@marco-pontes/simple-fake-api/http'
 
 Configuration in your package.json (consumer project):
 
@@ -345,22 +343,10 @@ Configuration in your package.json (consumer project):
 Usage (auto-load from package.json):
 
 ```ts
-import { http, httpFromPackageJson } from '@marco-pontes/simple-fake-api/http';
+import { create } from '@marco-pontes/simple-fake-api/http';
 
-// Option A (recommended): load config automatically from package.json
-const { create } = http.fromPackageJson(); // or: const { create } = httpFromPackageJson();
+// Load config automatically from your package.json (simple-fake-api-config.http)
 const api = create('api-server', { headers: { /* auth, etc. */ } });
-
-// Option B: pass config programmatically if you prefer
-const api2 = http({
-  endpoints: {
-    'api-server': {
-      dev: { baseUrl: 'http://localhost:5000' },
-      prod: { baseUrl: 'https://prod.endpoint.com' },
-      staging: { baseUrl: 'https://staging.endpoint.com' },
-    },
-  },
-}).create('api-server');
 
 // usage
 // const res = await api.get('/users');

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import type { SimpleFakeApiConfig } from '../types.js';
+import type { SimpleFakeApiConfig } from './types.js';
 
 export function readPackageJson(customPackageJsonPath?: string): any | undefined {
   try {
@@ -30,11 +30,31 @@ export function readSimpleFakeApiConfig(customPackageJsonPath?: string): SimpleF
   return pkg['simple-fake-api-config'] as SimpleFakeApiConfig | undefined;
 }
 
-import type { PackageJsonHttpSection } from '../types.js';
+import type { PackageJsonHttpSection, HttpClientConfig } from './types.js';
 
 export function readSimpleFakeApiHttpConfig(customPackageJsonPath?: string): PackageJsonHttpSection | undefined {
   const pkg = readPackageJson(customPackageJsonPath);
   if (!pkg) return undefined;
   const root = pkg['simple-fake-api-config'];
   return root && (root['http'] as PackageJsonHttpSection | undefined);
+}
+
+// Centralized loader for HTTP client config
+export function loadHttpClientConfigFromPackageJson(customPackageJsonPath?: string): HttpClientConfig {
+  try {
+    const section = readSimpleFakeApiHttpConfig(customPackageJsonPath);
+    if (!section) {
+      throw new Error('Key "simple-fake-api-config.http" not found in package.json');
+    }
+    if (!section.endpoints || typeof section.endpoints !== 'object') {
+      throw new Error('Invalid "simple-fake-api-config.http": missing endpoints');
+    }
+    return {
+      endpoints: section.endpoints as any,
+      resolveEnv: (section as any).resolveEnv,
+    } as HttpClientConfig;
+  } catch (e: any) {
+    const msg = `simple-fake-api/http: unable to load configuration from package.json (${e?.message || e})`;
+    throw new Error(msg);
+  }
 }

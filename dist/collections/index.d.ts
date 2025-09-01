@@ -1,4 +1,4 @@
-import type { DataCollections } from '../types.js';
+import type { DataCollections } from '../utils/types.js';
 /**
  * Carrega e gera todas as coleções de dados simuladas a partir dos esquemas.
  * Esta função deve ser chamada apenas uma vez na inicialização da aplicação.

@@ -34,3 +34,23 @@ export function readSimpleFakeApiHttpConfig(customPackageJsonPath) {
     const root = pkg['simple-fake-api-config'];
     return root && root['http'];
 }
+// Centralized loader for HTTP client config
+export function loadHttpClientConfigFromPackageJson(customPackageJsonPath) {
+    try {
+        const section = readSimpleFakeApiHttpConfig(customPackageJsonPath);
+        if (!section) {
+            throw new Error('Key "simple-fake-api-config.http" not found in package.json');
+        }
+        if (!section.endpoints || typeof section.endpoints !== 'object') {
+            throw new Error('Invalid "simple-fake-api-config.http": missing endpoints');
+        }
+        return {
+            endpoints: section.endpoints,
+            resolveEnv: section.resolveEnv,
+        };
+    }
+    catch (e) {
+        const msg = `simple-fake-api/http: unable to load configuration from package.json (${e?.message || e})`;
+        throw new Error(msg);
+    }
+}
