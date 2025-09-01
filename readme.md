@@ -61,9 +61,15 @@ export const get = (_req, res) => {
 ```jsonc
 {
   "scripts": {
-    "api": "node dist/index.js",
-  },
+    "api": "simple-fake-api"
+  }
 }
+```
+
+Alternatively, you can run it without adding a script using npx:
+
+```bash
+npx @marco-pontes/simple-fake-api
 ```
 
 5. Build and run
