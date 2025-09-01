@@ -328,8 +328,10 @@ Configuration in your package.json (consumer project):
 
 ```jsonc
 {
-  "simple-fake-api-http": {
-    "endpoints": {
+  "simple-fake-api-config": {
+    // ... other simple-fake-api server settings ...
+    "http": {
+      "endpoints": {
       "api-server": {
         "dev": { "baseUrl": "http://localhost:5000" },
         "staging": { "baseUrl": "https://staging.endpoint.com" },

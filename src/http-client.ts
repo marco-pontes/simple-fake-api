@@ -109,29 +109,21 @@ export const http = (config: HttpClientConfig) => {
 export const client = { create: (...args: any[]) => (http as any)(...args) } as any;
 
 // ---- Package.json-based configuration loader ----
-import fs from 'fs';
-import path from 'path';
+import { readSimpleFakeApiHttpConfig } from './utils/pkg.js';
 
-export interface PackageJsonHttpSection {
-  endpoints: HttpClientConfig['endpoints'];
-  resolveEnv?: HttpClientConfig['resolveEnv'];
-}
 
 /**
  * Loads HTTP client configuration from the consumer project's package.json key:
- * "simple-fake-api-http"
+ * "simple-fake-api-config.http" (http client config nested under the main simple-fake-api-config)
  */
 export function loadHttpClientConfigFromPackageJson(customPackageJsonPath?: string): HttpClientConfig {
-  const cwd = process.cwd();
-  const packageJsonPath = customPackageJsonPath || path.join(cwd, 'package.json');
   try {
-    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as any;
-    const section: PackageJsonHttpSection | undefined = pkg['simple-fake-api-http'];
+    const section = readSimpleFakeApiHttpConfig(customPackageJsonPath);
     if (!section) {
-      throw new Error('Key "simple-fake-api-http" not found in package.json');
+      throw new Error('Key "simple-fake-api-config.http" not found in package.json');
     }
     if (!section.endpoints || typeof section.endpoints !== 'object') {
-      throw new Error('Invalid "simple-fake-api-http": missing endpoints');
+      throw new Error('Invalid "simple-fake-api-config.http": missing endpoints');
     }
     return {
       endpoints: section.endpoints,

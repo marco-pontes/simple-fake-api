@@ -1,7 +1,6 @@
-import path from 'path';
-import fs from 'fs';
 import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants.js';
 import type { SimpleFakeApiConfig } from './utils/types';
+import { readSimpleFakeApiConfig } from './utils/pkg.js';
 
 /**
  * Lê e valida as configurações da Simple Fake API a partir do arquivo package.json.
@@ -9,26 +8,14 @@ import type { SimpleFakeApiConfig } from './utils/types';
  * @throws {Error} Se o caractere curinga for inválido, o processo é encerrado.
  */
 export const loadConfig = (): SimpleFakeApiConfig => {
-  const currentDir = process.cwd();
-  const packageJsonPath = path.join(currentDir, 'package.json');
-
   let config: SimpleFakeApiConfig = { ...DEFAULT_CONFIG };
 
-  try {
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-    const userConfig = packageJson['simple-fake-api-config'];
-
-    // Se o usuário forneceu configurações, mescla com as padrão.
-    if (userConfig) {
-      config = { ...config, ...userConfig };
-    } else {
-      console.info(
-        'Configuração "simple-fake-api-config" não encontrada no package.json. Usando configurações padrão.',
-      );
-    }
-  } catch (e: any) {
+  const userConfig = readSimpleFakeApiConfig();
+  if (userConfig) {
+    config = { ...config, ...userConfig };
+  } else {
     console.info(
-      'Não foi possível ler o package.json. Usando configurações padrão (procuramos "simple-fake-api-config").',
+      'Configuração "simple-fake-api-config" não encontrada no package.json. Usando configurações padrão.',
     );
   }
 

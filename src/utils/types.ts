@@ -38,3 +38,9 @@ export interface RouteDefinition {
   method: string;
   handler: (req: any, res: any) => void;
 }
+
+// HTTP client configuration section nested under simple-fake-api-config
+export interface PackageJsonHttpSection {
+  endpoints: Record<string, any>;
+  resolveEnv?: () => any;
+}

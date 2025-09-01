@@ -33,3 +33,7 @@ export interface RouteDefinition {
     method: string;
     handler: (req: any, res: any) => void;
 }
+export interface PackageJsonHttpSection {
+    endpoints: Record<string, any>;
+    resolveEnv?: () => any;
+}

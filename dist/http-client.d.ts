@@ -34,13 +34,9 @@ export declare const http: (config: HttpClientConfig) => {
     create: (endpointName: string, options?: CreateOptions) => Client;
 };
 export declare const client: any;
-export interface PackageJsonHttpSection {
-    endpoints: HttpClientConfig['endpoints'];
-    resolveEnv?: HttpClientConfig['resolveEnv'];
-}
 /**
  * Loads HTTP client configuration from the consumer project's package.json key:
- * "simple-fake-api-http"
+ * "simple-fake-api-config.http" (http client config nested under the main simple-fake-api-config)
  */
 export declare function loadHttpClientConfigFromPackageJson(customPackageJsonPath?: string): HttpClientConfig;
 /**
