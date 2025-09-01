@@ -3,6 +3,7 @@ import express from 'express';
 import { loadConfig } from './config.js';
 import { addExpressRoutes, mapRoutes } from './routes.js';
 import { loadCollections } from './collections/index.js';
+export { http as httpClientFactory, client as http } from './http-client.js';
 // Uma variável de escopo do módulo para armazenar a instância do SimpleFakeApi após a inicialização.
 let fastApi = null;
 // Test-only helper to reset internal state between tests

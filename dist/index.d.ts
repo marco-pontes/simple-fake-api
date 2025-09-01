@@ -1,4 +1,5 @@
 import './bootstrap.js';
+export { http as httpClientFactory, client as http } from './http-client.js';
 export declare const __resetForTests: () => void;
 export declare const getCollections: () => object;
 /**

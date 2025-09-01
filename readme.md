@@ -317,6 +317,42 @@ Notes
 
 ## Programmatic usage
 
+### New: Environment-aware HTTP client for front-end apps
+
+- Import factory directly from the subpath export:
+  - import { http as client } from '@marco-pontes/simple-fake-api/http'
+- Or via main export re-exports:
+  - import { http as client } from '@marco-pontes/simple-fake-api'
+
+Example configuration and usage:
+
+```ts
+import { http as client } from '@marco-pontes/simple-fake-api/http';
+
+const cfg = {
+  endpoints: {
+    'api-server': {
+      dev: { baseUrl: 'http://localhost:5000', headers: { } },
+      prod: { baseUrl: 'https://prod.endpoint.com' },
+      staging: { baseUrl: 'https://staging.endpoint.com' },
+    },
+  },
+};
+
+export const httpClient = () => {
+  return client(cfg).create('api-server', { headers: { /* auth, etc. */ } });
+};
+
+// usage:
+// const api = httpClient();
+// const res = await api.get('/users');
+// const created = await api.post('/users', { name: 'John' });
+```
+
+Environment resolution:
+- Defaults to dev when NODE_ENV is not set.
+- test -> test, staging -> staging, production/prod -> prod. You can also pass resolveEnv in config.
+
 You can embed simple-fake-api in another Node process (if you import from ESM):
 
 ```ts
