@@ -7,17 +7,28 @@
   "scripts": {
     "api": "simple-fake-api"
   },
+  "dependencies": {
+    "@marco-pontes/simple-fake-api": "file:.."
+  },
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/glob": "^8.1.0",
-    "@types/node": "^20.12.12",
-    "simple-fake-api": "file:..",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
+    "typescript": "^5.6.3"
   },
   "simple-fake-api-config": {
     "port": 5000,
     "apiDir": "api",
-    "wildcardChar": "_"
+    "collectionsDir": "collections",
+    "wildcardChar": "_",
+    "http": {
+      "endpoints": {
+        "api-server": {
+          "dev": { "baseUrl": "http://localhost:5000" },
+          "staging": { "baseUrl": "https://staging.endpoint.com" },
+          "prod": { "baseUrl": "https://prod.endpoint.com" }
+        }
+      }
+    }
   }
 }
