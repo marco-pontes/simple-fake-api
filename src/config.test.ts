@@ -1,13 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
-import { loadConfig } from './config';
+const getLoadConfig = async () => (await import('./config')).loadConfig;
 import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from '@/utils/constants';
 
 // Helper to build a fake package.json string
 const makePkg = (overrides?: Record<string, any>) => {
-  const base: any = { name: 'fast-api-test' };
-  if (overrides) base['fast-api-config'] = overrides;
+  const base: any = { name: 'simple-fake-api-test' };
+  if (overrides) base['simple-fake-api-config'] = overrides;
   return JSON.stringify(base);
 };
 
@@ -44,10 +44,11 @@ describe('loadConfig', () => {
     vi.restoreAllMocks();
   });
 
-  it('uses default config when fast-api-config is missing', () => {
+  it('uses default config when simple-fake-api-config is missing', async () => {
     // Return a package.json without the key
     readSpy.mockReturnValue(makePkg());
 
+    const loadConfig = await getLoadConfig();
     const cfg = loadConfig();
     expect(cfg).toEqual(DEFAULT_CONFIG);
 
@@ -57,15 +58,16 @@ describe('loadConfig', () => {
     expect(infoSpy).toHaveBeenCalled();
   });
 
-  it('merges user config with defaults when provided', () => {
+  it('merges user config with defaults when provided', async () => {
     const user = { port: 1234, apiDir: 'apis', wildcardChar: '_', collectionsDir: 'cols' };
     readSpy.mockReturnValue(makePkg(user));
 
+    const loadConfig = await getLoadConfig();
     const cfg = loadConfig();
     expect(cfg).toEqual({ ...DEFAULT_CONFIG, ...user });
   });
 
-  it('accepts valid single-character wildcardChar', () => {
+  it('accepts valid single-character wildcardChar', async () => {
     for (const ch of Array.from(VALID_WILDCARD_CHARS)) {
       vi.restoreAllMocks();
       // Re-setup spies for each iteration
@@ -79,16 +81,18 @@ describe('loadConfig', () => {
         throw err;
       }) as any);
 
+      const loadConfig = await getLoadConfig();
       const cfg = loadConfig();
       expect(cfg.wildcardChar).toBe(ch);
       expect(errorSpy).not.toHaveBeenCalled();
     }
   });
 
-  it('exits with code 1 when wildcardChar is invalid (not in allowed set)', () => {
+  it('exits with code 1 when wildcardChar is invalid (not in allowed set)', async () => {
     readSpy.mockReturnValue(makePkg({ wildcardChar: 'x' })); // assuming 'x' not in set
 
     try {
+      const loadConfig = await getLoadConfig();
       loadConfig();
       throw new Error('Expected process.exit to be called');
     } catch (e: any) {
@@ -99,10 +103,11 @@ describe('loadConfig', () => {
     }
   });
 
-  it('exits when wildcardChar length is not 1', () => {
+  it('exits when wildcardChar length is not 1', async () => {
     readSpy.mockReturnValue(makePkg({ wildcardChar: '**' }));
 
     try {
+      const loadConfig = await getLoadConfig();
       loadConfig();
       throw new Error('Expected process.exit to be called');
     } catch (e: any) {
@@ -111,17 +116,19 @@ describe('loadConfig', () => {
     }
   });
 
-  it('uses defaults when package.json is unreadable or invalid JSON', () => {
+  it('uses defaults when package.json is unreadable or invalid JSON', async () => {
     // Cause JSON.parse to fail by returning invalid JSON
     readSpy.mockReturnValue('this is not json');
 
+    const loadConfig = await getLoadConfig();
     const cfg = loadConfig();
     expect(cfg).toEqual(DEFAULT_CONFIG);
     expect(infoSpy).toHaveBeenCalled();
   });
 
-  it('handles empty user config object gracefully', () => {
+  it('handles empty user config object gracefully', async () => {
     readSpy.mockReturnValue(makePkg({}));
+    const loadConfig = await getLoadConfig();
     const cfg = loadConfig();
     expect(cfg).toEqual({ ...DEFAULT_CONFIG });
   });

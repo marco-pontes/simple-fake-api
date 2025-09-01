@@ -3,9 +3,9 @@
 A small, fast file‑based fake API server for Node.js. Define endpoints by creating files in a folder (no codegen, no config files), and get realistic data using @faker-js/faker and json-schema-faker for collections.
 
 - Express-based HTTP server
-- File-system routing: map files in apiDir to routes automatically
-- Dynamic params via wildcardChar (e.g., api/users/\_id.ts -> /users/:id)
-- HTTP method by exported function name in the file (export const get/post/put/delete, etc.)
+- File-system routing: map files in `apiDir` to routes automatically
+- Dynamic params via `wildcardChar` (e.g., `api/users/_id.ts` -> `/users/:id`)
+- HTTP method by exported function name in the file (e.g., `export const get = ...` -> `GET`)
 - Collections: generate large arrays of realistic objects from JSON Schema using json-schema-faker
 - Zero DB, zero migrations; perfect for front-end development, demos, and tests
 
@@ -77,20 +77,20 @@ Open <http://localhost:5000/ping>
 
 ## Capabilities
 
-- File-based routing from apiDir
-  - index.ts -> removes "/index" from the path
-  - Nested folders become nested routes (api/v1/users/index.ts -> /v1/users)
-- Dynamic route params via wildcardChar
-  - Example: api/users/\_id.ts -> /users/:id
+- File-based routing from `apiDir`
+  - `index.ts` -> removes "/index" from the path
+  - Nested folders become nested routes (`api/v1/users/index.ts` -> `/v1/users`)
+- Dynamic route params via `wildcardChar`
+  - Example: `api/users/_id.ts` -> `/users/:id`
 - HTTP method from exported function name
-  - export const get = ... => GET
-  - export const post = ... => POST
-  - export const put = ... => PUT
-  - export const delete = ... => DELETE
+  - `export const get = ...` => `GET`
+  - `export const post = ...` => `POST`
+  - `export const put = ...` => `PUT`
+  - `export const delete = ...` => `DELETE`
   - If multiple are exported, each method is mapped for the same path
 - Collections (json-schema-faker)
-  - Place JSON Schema files in api/collections
-  - They are generated at startup and available in any handler via getCollections()
+  - Place JSON Schema files in `api/collections`
+  - They are generated at startup and available in any handler via `getCollections()`
 
 ## Configuration (package.json)
 
@@ -116,14 +116,14 @@ Configuration options and defaults:
 
 Notes:
 
-- You can override any of the above in your package.json under "simple-fake-api-config" (also backward compatible with "fast-api-config").
-- Example: with wildcardChar "\_", a file api/users/\_id.ts maps to GET /users/:id.
+- You can override any of the above in your package.json under `"simple-fake-api-config"`.
+- Example: with `wildcardChar` "_", a file `api/users/_id.ts` maps to `GET /users/:id`. 
 
 ## URL mapping examples (5)
 
-Given wildcardChar "\_":
+Given `wildcardChar` "_": 
 
-1. api/v1/users.ts -> GET /v1/users
+1. `api/v1/users.ts` -> `GET /v1/users`
    File content:
 
 ```ts
@@ -132,7 +132,7 @@ export const get = (_req, res) => {
 };
 ```
 
-2. api/users/list/index.ts -> GET /users/list
+2. `api/users/list/index.ts` -> `GET /users/list`
    File content:
 
 ```ts
@@ -141,7 +141,7 @@ export const get = (_req, res) => {
 };
 ```
 
-3. api/users/\_id.ts -> GET /users/:id
+3. `api/users/_id.ts` -> `GET /users/:id`
    File content:
 
 ```ts
@@ -150,7 +150,7 @@ export const get = (req, res) => {
 };
 ```
 
-4. api/users/create.js -> POST /users/create
+4. `api/users/create.js` -> `POST /users/create`
    File content:
 
 ```js
@@ -159,7 +159,7 @@ export const post = (req, res) => {
 };
 ```
 
-5. api/v1/users/\_id/details.ts -> GET /v1/users/:id/details
+5. `api/v1/users/_id/details.ts` -> `GET /v1/users/:id/details`
    File content:
 
 ```ts
@@ -245,7 +245,7 @@ const { users, products, orders, comments } = getCollections();
 }
 ```
 
-By default fast-api generates 50 items per collection (configurable in code; schemas can specify their own array size constraints as well).
+By default, the generator creates 50 items per collection (configurable in code; schemas can specify their own array size constraints as well).
 
 ### Using collections inside a route
 
@@ -306,8 +306,8 @@ Example package.json (consumer project)
 
 Notes
 
-- If you’re not using TypeScript, omit the build step and use .js files in api/.
-- Your routes are ESM modules; export named handlers by HTTP verb (GET, POST, etc.).
+- If you’re not using TypeScript, omit the build step and use `.js` files in `api/`.
+- Your routes are ESM modules; export named handlers by HTTP verb (`GET`, `POST`, etc.).
 
 ## Programmatic usage
 
@@ -334,15 +334,15 @@ start();
 ## Troubleshooting
 
 - 404? Ensure your file name and folder structure match the expected route.
-- Dynamic segments not working? Check fast-api-config.wildcardChar matches your filenames.
-- ESM import errors? Ensure "type": "module" in your package.json, or use .cjs/interop accordingly.
+- Dynamic segments not working? Check `simple-fake-api-config.wildcardChar` matches your filenames.
+- ESM import errors? Ensure `"type": "module"` in your package.json, or use .cjs/interop accordingly.
 
 ## Publishing to npm
 
 Follow these steps to publish this package to npm:
 
 - Prerequisites
-  - Ensure you own the package name (fast-api) or adjust the name in package.json (e.g., "@your-scope/fast-api").
+  - Ensure you own the package name (simple-fake-api) or adjust the name in package.json (e.g., "@your-scope/simple-fake-api").
   - Node >= 18.
   - 2FA on npm (recommended).
 
@@ -365,8 +365,8 @@ Follow these steps to publish this package to npm:
   - With 2FA, you’ll be prompted for an OTP.
 
 - Useful tips
-  - The package exports ESM (type: module). Consumers on CommonJS might need dynamic import or transpilation.
-  - The CLI binary is available as `fast-api` after install. Run it in a project with a configured `fast-api-config`.
+  - The package exports ESM (`"type": "module"`). Consumers on CommonJS might need dynamic import or transpilation.
+  - The CLI binary is available as `simple-fake-api` after install. Run it in a project with a configured `simple-fake-api-config`.
   - To deprecate or unpublish, see npm docs (be cautious with unpublish on popular packages).
 
 ## License

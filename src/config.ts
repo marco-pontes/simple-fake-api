@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants.js';
+import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants';
 import type { SimpleFakeApiConfig } from './utils/types';
 
 /**
@@ -16,19 +16,19 @@ export const loadConfig = (): SimpleFakeApiConfig => {
 
   try {
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-    const userConfig = packageJson['simple-fake-api-config'] ?? packageJson['fast-api-config'];
+    const userConfig = packageJson['simple-fake-api-config'];
 
     // Se o usuário forneceu configurações, mescla com as padrão.
     if (userConfig) {
       config = { ...config, ...userConfig };
     } else {
       console.info(
-        'Configuração "simple-fake-api-config" não encontrada no package.json. Usando configurações padrão (compatível com "fast-api-config").',
+        'Configuração "simple-fake-api-config" não encontrada no package.json. Usando configurações padrão.',
       );
     }
   } catch (e: any) {
     console.info(
-      'Não foi possível ler o package.json. Usando configurações padrão (procuramos "simple-fake-api-config" e "fast-api-config").',
+      'Não foi possível ler o package.json. Usando configurações padrão (procuramos "simple-fake-api-config").',
     );
   }
 

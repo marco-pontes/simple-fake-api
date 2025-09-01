@@ -1,21 +1,21 @@
 {
-  "name": "fast-api-example",
+  "name": "simple-fake-api-example",
   "version": "1.0.0",
-  "description": "An example project using the Fast API library.",
+  "description": "An example project using the simple-fake-api library.",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "api": "fast-api"
+    "api": "simple-fake-api"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/glob": "^8.1.0",
     "@types/node": "^20.12.12",
-    "fast-api": "file:..",
+    "simple-fake-api": "file:..",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   },
-  "fast-api-config": {
+  "simple-fake-api-config": {
     "port": 5000,
     "apiDir": "api",
     "wildcardChar": "_"
