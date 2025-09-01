@@ -23,6 +23,17 @@ export const initialize = async () => {
         const app = express();
         // Aplica o middleware do Express para parsear JSON.
         app.use(express.json());
+        // Habilita CORS para permitir requisições de qualquer origem.
+        app.use((_req, res, next) => {
+            res.header('Access-Control-Allow-Origin', '*');
+            res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD');
+            res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+            // Responde rapidamente a preflight requests
+            if (_req.method === 'OPTIONS') {
+                return res.sendStatus(204);
+            }
+            next();
+        });
         // Mapeia as rotas do diretório da API.
         const routeDefinitions = await mapRoutes(config.apiDir, config.wildcardChar);
         addExpressRoutes(app, routeDefinitions.literals, routeDefinitions.params);
