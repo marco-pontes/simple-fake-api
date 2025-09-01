@@ -1,7 +1,7 @@
 // React-style hook for users-related HTTP operations using the example http client
 // This file lives under examples/src/hooks as requested.
 
-import { httpClient } from '../http-client.js';
+import { httpClient } from '../common/http-client.js';
 
 export const useUsers = () => {
   const fetchUsers = async () => {
