@@ -15,7 +15,7 @@ A small, fast file‑based fake API server for Node.js. Define endpoints by crea
 - Install:
 
   ```bash
-  npm i simple-fake-api
+  npm i @marco-pontes/simple-fake-api
   ```
 
 ## Quickstart (TL;DR)
