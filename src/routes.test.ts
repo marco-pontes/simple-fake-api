@@ -45,6 +45,7 @@ describe('routes', () => {
   });
 
   it('mapRoutes separates literal and param routes, handles index, and loads handlers', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     // create files on disk to be imported
     const usersList = path.join(apiPath, 'users', 'list', 'index.js');
     createTempModule(usersList, { GET: (_req: any, res: any) => res.send('ok') });
@@ -59,6 +60,7 @@ describe('routes', () => {
     (glob as any).mockResolvedValue(['users/list/index.js', 'users/_id.js', 'v1/users.js']);
 
     const { literals, params } = await mapRoutes(apiDir, '_');
+    expect(logSpy).toBeDefined();
 
     // literals should include users/list (GET) and v1/users (POST)
     expect(literals.map((r) => ({ route: r.route, method: r.method }))).toEqual(
@@ -80,6 +82,7 @@ describe('routes', () => {
   });
 
   it('mapRoutes logs error when a module fails to import and continues', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // one good file, one bad file
     const good = path.join(apiPath, 'ok.js');

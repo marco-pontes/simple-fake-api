@@ -22,7 +22,14 @@ export const mapRoutes = async (
   const apiPath = path.join(currentDir, apiDir);
 
   const pattern = `**/*.${routeFileExtension}`;
+  // Log the folder and pattern used for searching route files
+  try {
+    console.log(`simple-fake-api: searching for routes in: ${apiPath} (pattern: ${pattern}, ignore: collections/*)`);
+  } catch {}
   const files = await glob(pattern, { cwd: apiPath, ignore: 'collections/*' });
+  try {
+    console.log(`simple-fake-api: found ${files.length} file(s): ${files.join(', ')}`);
+  } catch {}
 
   // If we're dealing with TypeScript route files, try to register ts-node to allow runtime loading
   const isTs = routeFileExtension === 'ts';
