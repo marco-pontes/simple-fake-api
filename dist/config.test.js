@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const getLoadConfig = async () => (await import('./config')).loadConfig;
 import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from '@/utils/constants';
@@ -11,8 +9,6 @@ const makeCfg = (overrides) => ({
     wildcardChar: '_',
     ...(overrides || {}),
 });
-// Spy references
-let readSpy;
 // @ts-ignore
 let cwdSpy;
 // @ts-ignore
