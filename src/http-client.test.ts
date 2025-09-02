@@ -33,7 +33,23 @@ describe('http-client', () => {
     delete globalThis.__SIMPLE_FAKE_API_HTTP__;
   });
 
-  it('falls back to localhost:port from package.json when no injection', async () => {
+  it('falls back to localhost:port from injected server config when no HTTP injection', async () => {
+    // @ts-ignore
+    globalThis.__SIMPLE_FAKE_API_CONFIG__ = { port: 5051, apiDir: 'api', collectionsDir: 'collections', wildcardChar: '_' };
+    // Ensure no HTTP injection
+    // @ts-ignore
+    delete globalThis.__SIMPLE_FAKE_API_HTTP__;
+
+    const client = create('anything');
+    await client.get('/ping');
+    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:5051/ping', expect.objectContaining({ method: 'GET' }));
+
+    // cleanup
+    // @ts-ignore
+    delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
+  });
+
+  it('falls back to localhost:port from package.json when no injection and no injected server config', async () => {
     // mock reading package.json for port via explicit path
     const pkgPath = '/tmp/pkg.json';
     vi.spyOn(fs, 'readFileSync').mockImplementation((p: any) => {

@@ -127,8 +127,22 @@ export function create(endpointName: string, options?: CreateOptions, customPack
     const factory = buildFactory(injected as HttpClientConfig);
     return factory.create(endpointName, options);
   }
-  // 2) Node/dev: fallback to localhost:<port> from simple-fake-api-config.port
-  const port = (() => {
+  // 2) Node/dev: fallback to localhost:<port> from injected server config (bundler-provided)
+  const injectedPort = (() => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const anyGlobal: any = (typeof globalThis !== 'undefined') ? (globalThis as any) : {};
+      return anyGlobal.__SIMPLE_FAKE_API_CONFIG__?.port as number | undefined;
+    } catch {
+      return undefined;
+    }
+  })();
+  if (injectedPort) {
+    const factory = buildFactory({ endpoints: {} as any } as HttpClientConfig, `http://localhost:${injectedPort}`);
+    return factory.create(endpointName, options);
+  }
+  // 3) Last Node/dev fallback: read port from package.json simple-fake-api-config.port (legacy)
+  const pkgPort = (() => {
     try {
       const pkgPath = customPackageJsonPath || path.join(process.cwd(), 'package.json');
       const raw = fs.readFileSync(pkgPath, 'utf8');
@@ -138,8 +152,8 @@ export function create(endpointName: string, options?: CreateOptions, customPack
       return undefined;
     }
   })();
-  if (port) {
-    const factory = buildFactory({ endpoints: {} as any } as HttpClientConfig, `http://localhost:${port}`);
+  if (pkgPort) {
+    const factory = buildFactory({ endpoints: {} as any } as HttpClientConfig, `http://localhost:${pkgPort}`);
     return factory.create(endpointName, options);
   }
   // Last resort: error
