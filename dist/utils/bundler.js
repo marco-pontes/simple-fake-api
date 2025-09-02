@@ -5,9 +5,23 @@ import fs from 'fs';
 import path from 'path';
 import { loadSimpleFakeApiConfigSync } from './fake-api-config-file.js';
 function loadUserConfigFile() {
+    const DEBUG = !!(process && (process.env.SIMPLE_FAKE_API_DEBUG || process.env.SIMPLE_FAKE_API_BUNDLER_DEBUG));
     const cfg = loadSimpleFakeApiConfigSync();
-    if (cfg)
+    if (cfg) {
+        if (DEBUG) {
+            try {
+                console.log('simple-fake-api/bundler[debug]: loadSimpleFakeApiConfigSync returned a config object');
+            }
+            catch { }
+        }
         return cfg;
+    }
+    if (DEBUG) {
+        try {
+            console.log('simple-fake-api/bundler[debug]: loadSimpleFakeApiConfigSync returned undefined; building tried paths list');
+        }
+        catch { }
+    }
     const tried = [
         path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.js'),
         path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.cjs'),
@@ -15,11 +29,18 @@ function loadUserConfigFile() {
         path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.ts'),
         path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.cts'),
     ];
+    if (DEBUG) {
+        try {
+            console.log('simple-fake-api/bundler[debug]: throwing helpful error. Enable SIMPLE_FAKE_API_BUNDLER_DEBUG for these details.');
+            console.log(`simple-fake-api/bundler[debug]: tried=\n  - ${tried.join('\n  - ')}`);
+        }
+        catch { }
+    }
     const msg = [
-        'simple-fake-api/bundler: could not load simple-fake-api.config.js.',
+        'simple-fake-api/bundler: could not load simple-fake-api config file.',
         `Checked paths: ${tried.join(', ') || '(none found)'}.`,
-        'Ensure the file exists at your project root and uses CommonJS export (module.exports = { ... }).',
-        'If you must use ESM (.mjs), convert it to CommonJS or re-export as module.exports for the bundler to load synchronously.',
+        'Ensure the file exists at your project root. Supported extensions: .js, .cjs, .mjs, .ts, .cts.',
+        'TypeScript configs are supported via bundled ts-node at runtime.',
     ].join(' ');
     throw new Error(msg);
 }

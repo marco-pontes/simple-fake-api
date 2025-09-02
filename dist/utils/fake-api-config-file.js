@@ -13,24 +13,70 @@ export function getConfigCandidatePaths(baseDir) {
     ];
 }
 export function loadSimpleFakeApiConfigSync() {
+    const DEBUG = !!(process && (process.env.SIMPLE_FAKE_API_DEBUG || process.env.SIMPLE_FAKE_API_BUNDLER_DEBUG));
     try {
         const req = createRequire(import.meta.url);
         const candidates = getConfigCandidatePaths();
+        if (DEBUG) {
+            try {
+                const base = candidates[0] ? path.dirname(candidates[0]) : '(unknown)';
+                console.log(`simple-fake-api/bundler[debug]: baseDir=${base}`);
+                console.log(`simple-fake-api/bundler[debug]: candidates=\n  - ${candidates.join('\n  - ')}`);
+            }
+            catch { }
+        }
         for (const p of candidates) {
             try {
-                if (!fs.existsSync(p))
+                const exists = fs.existsSync(p);
+                if (DEBUG) {
+                    try {
+                        console.log(`simple-fake-api/bundler[debug]: check exists: ${p} -> ${exists}`);
+                    }
+                    catch { }
+                }
+                if (!exists)
                     continue;
+                if (DEBUG) {
+                    try {
+                        console.log(`simple-fake-api/bundler[debug]: attempting load: ${p}`);
+                    }
+                    catch { }
+                }
                 const cfg = syncRequireModule(p, req);
+                if (DEBUG) {
+                    try {
+                        console.log(`simple-fake-api/bundler[debug]: loaded OK: ${p}`);
+                    }
+                    catch { }
+                }
                 if (cfg && typeof cfg === 'object')
                     return cfg;
             }
-            catch {
+            catch (e) {
+                if (DEBUG) {
+                    try {
+                        console.log(`simple-fake-api/bundler[debug]: load failed for ${p}: ${e?.code || ''} ${e?.message || e}`);
+                    }
+                    catch { }
+                }
                 continue;
             }
         }
+        if (DEBUG) {
+            try {
+                console.log('simple-fake-api/bundler[debug]: no config file loaded (all candidates failed or missing)');
+            }
+            catch { }
+        }
         return undefined;
     }
-    catch {
+    catch (e) {
+        if (DEBUG) {
+            try {
+                console.log(`simple-fake-api/bundler[debug]: unexpected error: ${e?.message || e}`);
+            }
+            catch { }
+        }
         return undefined;
     }
 }
