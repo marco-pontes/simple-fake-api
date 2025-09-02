@@ -55,7 +55,9 @@ describe('http-client', () => {
     delete globalThis.__SIMPLE_FAKE_API_HTTP__;
     // @ts-ignore
     delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
-    expect(() => create('missing')).toThrow(/no configuration provided/i);
+    expect(() => create('missing')).toThrow(
+      'simple-fake-api/http: no configuration provided. Provide build-time config via setupSimpleFakeApiHttpRoutes in your bundler or inject __SIMPLE_FAKE_API_HTTP__',
+    );
   });
 
   it('json helpers set content-type for post/put/patch', async () => {
