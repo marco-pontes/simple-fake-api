@@ -6,16 +6,28 @@ import { start, initialize } from './index.js';
 async function createConfigFile() {
     try {
         const cwd = process.cwd();
-        // detect consumer module type
+        // detect consumer environment: TypeScript usage and module type
         let consumerType = 'commonjs';
+        let hasTypescript = false;
+        let pkgJson = {};
         try {
-            const pkgJson = JSON.parse(fs.readFileSync(path.join(cwd, 'package.json'), 'utf8'));
+            pkgJson = JSON.parse(fs.readFileSync(path.join(cwd, 'package.json'), 'utf8'));
             if (pkgJson && pkgJson.type === 'module')
                 consumerType = 'module';
+            const deps = { ...(pkgJson.dependencies || {}), ...(pkgJson.devDependencies || {}) };
+            if (typeof deps.typescript === 'string')
+                hasTypescript = true;
         }
         catch { }
+        if (!hasTypescript) {
+            try {
+                if (fs.existsSync(path.join(cwd, 'tsconfig.json')))
+                    hasTypescript = true;
+            }
+            catch { }
+        }
         const isModule = consumerType === 'module';
-        const fileName = isModule ? 'simple-fake-api.config.js' : 'simple-fake-api.config.cjs';
+        const fileName = hasTypescript ? 'simple-fake-api.config.ts' : (isModule ? 'simple-fake-api.config.js' : 'simple-fake-api.config.cjs');
         const targetPath = path.join(cwd, fileName);
         if (fs.existsSync(targetPath)) {
             console.log(`${fileName} already exists. Skipping.`);
@@ -25,7 +37,7 @@ async function createConfigFile() {
         const __filename = url.fileURLToPath(import.meta.url);
         const __dirname = path.dirname(__filename);
         const pkgRoot = path.resolve(__dirname, '..');
-        const templatePath = path.join(pkgRoot, 'examples', isModule ? 'simple-fake-api.config.js' : 'simple-fake-api.config.cjs');
+        const templatePath = path.join(pkgRoot, 'examples', hasTypescript ? 'simple-fake-api.config.ts' : (isModule ? 'simple-fake-api.config.js' : 'simple-fake-api.config.cjs'));
         if (fs.existsSync(templatePath)) {
             const content = fs.readFileSync(templatePath, 'utf8');
             fs.writeFileSync(targetPath, content, 'utf8');
@@ -50,7 +62,13 @@ async function createConfigFile() {
     },
   },
 }`;
-        const fallback = isModule ? `// simple-fake-api.config.js (ESM)\nexport default ${obj};\n` : `// simple-fake-api.config.cjs (CJS)\nmodule.exports = ${obj};\n`;
+        let fallback;
+        if (hasTypescript) {
+            fallback = `// simple-fake-api.config.ts (TypeScript)\nexport interface SimpleFakeApiExampleConfig {\n  port: number;\n  apiDir: string;\n  collectionsDir: string;\n  wildcardChar: string;\n  routeFileExtension?: 'js' | 'ts';\n  http?: {\n    endpoints: Record<string, Record<string, { baseUrl: string; headers?: Record<string, string> }>>;\n  };\n}\n\nconst config: SimpleFakeApiExampleConfig = ${obj};\n\nexport default config;\n`;
+        }
+        else {
+            fallback = isModule ? `// simple-fake-api.config.js (ESM)\nexport default ${obj};\n` : `// simple-fake-api.config.cjs (CJS)\nmodule.exports = ${obj};\n`;
+        }
         fs.writeFileSync(targetPath, fallback, 'utf8');
         console.log(`Created ${fileName} using fallback template`);
     }

@@ -42,14 +42,22 @@ try {
   const __filename = url.fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
   const consumerRoot = findConsumerRoot(__dirname);
-  // detect consumer module type
+  // detect consumer environment: TypeScript usage and module type
   let consumerType = 'commonjs';
+  let hasTypescript = false;
   try {
-    const pkgJson = JSON.parse(fs.readFileSync(path.join(consumerRoot, 'package.json'), 'utf8'));
+    const pkgJsonPath = path.join(consumerRoot, 'package.json');
+    const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
     if (pkgJson && pkgJson.type === 'module') consumerType = 'module';
+    const deps = { ...(pkgJson.dependencies || {}), ...(pkgJson.devDependencies || {}) };
+    if (typeof deps.typescript === 'string') hasTypescript = true;
   } catch {}
+  // Also detect tsconfig.json presence
+  if (!hasTypescript) {
+    try { if (fs.existsSync(path.join(consumerRoot, 'tsconfig.json'))) hasTypescript = true; } catch {}
+  }
   const isModule = consumerType === 'module';
-  const fileName = isModule ? 'simple-fake-api.config.js' : 'simple-fake-api.config.cjs';
+  const fileName = hasTypescript ? 'simple-fake-api.config.ts' : (isModule ? 'simple-fake-api.config.js' : 'simple-fake-api.config.cjs');
   const targetPath = path.join(consumerRoot, fileName);
 
   if (fs.existsSync(targetPath)) {
@@ -59,7 +67,11 @@ try {
 
   // Resolve the path of this installed package to find the template file
   const pkgRoot = __dirname; // this file sits at package root after install
-  const templatePath = path.join(pkgRoot, 'examples', isModule ? 'simple-fake-api.config.js' : 'simple-fake-api.config.cjs');
+  const templatePath = path.join(
+    pkgRoot,
+    'examples',
+    hasTypescript ? 'simple-fake-api.config.ts' : (isModule ? 'simple-fake-api.config.js' : 'simple-fake-api.config.cjs'),
+  );
 
   if (!fs.existsSync(templatePath)) {
     // Fallback: embed minimal template here, with correct syntax and routeFileExtension option
@@ -75,11 +87,17 @@ try {
         // development has no baseUrl; plugin will compute http://localhost:PORT
         staging: { baseUrl: 'https://staging.example.com' },
         production: { baseUrl: 'https://api.example.com' },
+        'my-custom-env': { baseUrl: 'https://api.example.com' },
       },
     },
   },
 }`;
-    const content = isModule ? `// simple-fake-api.config.js (ESM)\nexport default ${obj};\n` : `// simple-fake-api.config.cjs (CJS)\nmodule.exports = ${obj};\n`;
+    let content;
+    if (hasTypescript) {
+      content = `// simple-fake-api.config.ts (TypeScript)\nexport interface SimpleFakeApiExampleConfig {\n  port: number;\n  apiDir: string;\n  collectionsDir: string;\n  wildcardChar: string;\n  routeFileExtension?: 'js' | 'ts';\n  http?: {\n    endpoints: Record<string, Record<string, { baseUrl: string; headers?: Record<string, string> }>>;\n  };\n}\n\nconst config: SimpleFakeApiExampleConfig = ${obj};\n\nexport default config;\n`;
+    } else {
+      content = isModule ? `// simple-fake-api.config.js (ESM)\nexport default ${obj};\n` : `// simple-fake-api.config.cjs (CJS)\nmodule.exports = ${obj};\n`;
+    }
     fs.writeFileSync(targetPath, content, 'utf8');
     console.log(`Created ${fileName} using fallback template at`, targetPath);
     process.exit(0);
