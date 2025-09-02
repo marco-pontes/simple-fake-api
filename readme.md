@@ -11,6 +11,10 @@ A small, fast file‑based fake API server for Node.js. Define endpoints by crea
 
 ## Installation
 
+Note on TypeScript support:
+- This library bundles ts-node as a runtime dependency and attempts to register it automatically. Consumers can use .ts route files and a TypeScript simple-fake-api.config.ts without installing ts-node in their project.
+- Registration prefers 'ts-node/register/transpile-only' for speed and falls back to 'ts-node/register'. If, for any reason, ts-node cannot be loaded, a warning is logged and loading .ts files may fail.
+
 - Note for pnpm users (automatic config generation):
   - pnpm may skip postinstall scripts by default for security. If the simple-fake-api.config.js file was not created automatically after installation, approve the build for this package:
     - Run: pnpm approve-builds

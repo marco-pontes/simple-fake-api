@@ -151,7 +151,11 @@ export function create(endpointName: string, options?: CreateOptions): Client {
         const ext = path.extname(p);
         try {
           if (ext === '.ts' || ext === '.cts') {
-            try { req.resolve('ts-node/register'); (req as any)('ts-node/register'); } catch {}
+            try {
+              try { (req as any).resolve('ts-node/register/transpile-only'); (req as any)('ts-node/register/transpile-only'); }
+              catch { try { (req as any).resolve('ts-node/register'); (req as any)('ts-node/register'); } catch {}
+              }
+            } catch {}
             const mod = req(p);
             const cfg: any = mod && (mod.default ?? mod);
             if (cfg?.port) return cfg.port as number;

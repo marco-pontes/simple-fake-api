@@ -25,10 +25,19 @@ function loadUserConfigFile() {
         const ext = path.extname(p);
         if (ext === '.ts' || ext === '.cts') {
             try {
-                // Attempt to register ts-node if present in the consumer project
+                // Attempt to register ts-node from this library's dependency
                 try {
-                    req.resolve('ts-node/register');
-                    req('ts-node/register');
+                    try {
+                        req.resolve('ts-node/register/transpile-only');
+                        req('ts-node/register/transpile-only');
+                    }
+                    catch {
+                        try {
+                            req.resolve('ts-node/register');
+                            req('ts-node/register');
+                        }
+                        catch { }
+                    }
                 }
                 catch { }
                 const mod = req(p);

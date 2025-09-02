@@ -25,7 +25,13 @@ export function loadSimpleFakeApiConfigSync(): Partial<SimpleFakeApiConfig> | un
       const ext = path.extname(p);
       try {
         if (ext === '.ts' || ext === '.cts') {
-          try { (req as any).resolve('ts-node/register'); (req as any)('ts-node/register'); } catch {}
+          try {
+            try { (req as any).resolve('ts-node/register/transpile-only'); (req as any)('ts-node/register/transpile-only'); }
+            catch {
+              try { (req as any).resolve('ts-node/register'); (req as any)('ts-node/register'); }
+              catch { console.warn('simple-fake-api: ts-node not found while loading TypeScript config. .ts config may fail to load.'); }
+            }
+          } catch {}
           const mod = req(p);
           return (mod && (mod.default ?? mod)) as Partial<SimpleFakeApiConfig>;
         }

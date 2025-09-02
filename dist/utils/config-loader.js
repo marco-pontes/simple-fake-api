@@ -22,8 +22,19 @@ export function loadSimpleFakeApiConfigSync() {
             try {
                 if (ext === '.ts' || ext === '.cts') {
                     try {
-                        req.resolve('ts-node/register');
-                        req('ts-node/register');
+                        try {
+                            req.resolve('ts-node/register/transpile-only');
+                            req('ts-node/register/transpile-only');
+                        }
+                        catch {
+                            try {
+                                req.resolve('ts-node/register');
+                                req('ts-node/register');
+                            }
+                            catch {
+                                console.warn('simple-fake-api: ts-node not found while loading TypeScript config. .ts config may fail to load.');
+                            }
+                        }
                     }
                     catch { }
                     const mod = req(p);
