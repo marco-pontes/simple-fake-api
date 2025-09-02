@@ -45,7 +45,7 @@ function loadUserConfigFile(): any {
     if (ext === '.ts' || ext === '.cts') {
       try {
         // Attempt to register ts-node if present in the consumer project
-        try { req.resolve('ts-node/register'); require('ts-node/register'); } catch {}
+        try { req.resolve('ts-node/register'); (req as any)('ts-node/register'); } catch {}
         const mod = req(p);
         console.log(`simple-fake-api/bundler: loaded config file: ${p}`);
         return (mod && (mod.default ?? mod));

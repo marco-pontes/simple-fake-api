@@ -28,7 +28,7 @@ function loadUserConfigFile() {
                 // Attempt to register ts-node if present in the consumer project
                 try {
                     req.resolve('ts-node/register');
-                    require('ts-node/register');
+                    req('ts-node/register');
                 }
                 catch { }
                 const mod = req(p);

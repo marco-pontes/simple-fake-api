@@ -33,11 +33,11 @@ export const mapRoutes = async (
       try {
         // Prefer transpile-only for speed; fall back to full register
         (req as any).resolve('ts-node/register/transpile-only');
-        (require as any)('ts-node/register/transpile-only');
+        (req as any)('ts-node/register/transpile-only');
       } catch {
         try {
           (req as any).resolve('ts-node/register');
-          (require as any)('ts-node/register');
+          (req as any)('ts-node/register');
         } catch {
           console.warn('simple-fake-api: ts-node not found. Attempting native import of .ts files may fail. Install devDependency: ts-node');
         }
