@@ -136,17 +136,27 @@ export function create(endpointName, options) {
                 try {
                     if (ext === '.ts' || ext === '.cts') {
                         try {
+                            // Prefer programmatic ts-node registration for robust CJS require of TS files
                             try {
-                                req.resolve('ts-node/register/transpile-only');
-                                req('ts-node/register/transpile-only');
-                            }
-                            catch {
-                                try {
-                                    req.resolve('ts-node/register');
-                                    req('ts-node/register');
+                                const tsnode = req('ts-node');
+                                if (tsnode && typeof tsnode.register === 'function') {
+                                    tsnode.register({ transpileOnly: true, compilerOptions: { module: 'commonjs', esModuleInterop: true } });
                                 }
-                                catch { }
+                                else {
+                                    try {
+                                        req.resolve('ts-node/register/transpile-only');
+                                        req('ts-node/register/transpile-only');
+                                    }
+                                    catch {
+                                        try {
+                                            req.resolve('ts-node/register');
+                                            req('ts-node/register');
+                                        }
+                                        catch { }
+                                    }
+                                }
                             }
+                            catch { }
                         }
                         catch { }
                         const mod = req(p);

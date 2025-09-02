@@ -22,19 +22,29 @@ export function loadSimpleFakeApiConfigSync() {
             try {
                 if (ext === '.ts' || ext === '.cts') {
                     try {
+                        // Prefer programmatic ts-node registration for robust CJS require of TS files
                         try {
-                            req.resolve('ts-node/register/transpile-only');
-                            req('ts-node/register/transpile-only');
-                        }
-                        catch {
-                            try {
-                                req.resolve('ts-node/register');
-                                req('ts-node/register');
+                            const tsnode = req('ts-node');
+                            if (tsnode && typeof tsnode.register === 'function') {
+                                tsnode.register({ transpileOnly: true, compilerOptions: { module: 'commonjs', esModuleInterop: true } });
                             }
-                            catch {
-                                console.warn('simple-fake-api: ts-node not found while loading TypeScript config. .ts config may fail to load.');
+                            else {
+                                try {
+                                    req.resolve('ts-node/register/transpile-only');
+                                    req('ts-node/register/transpile-only');
+                                }
+                                catch {
+                                    try {
+                                        req.resolve('ts-node/register');
+                                        req('ts-node/register');
+                                    }
+                                    catch {
+                                        console.warn('simple-fake-api: ts-node not found while loading TypeScript config. .ts config may fail to load.');
+                                    }
+                                }
                             }
                         }
+                        catch { }
                     }
                     catch { }
                     const mod = req(p);

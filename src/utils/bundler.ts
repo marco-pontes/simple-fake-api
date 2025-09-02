@@ -44,10 +44,15 @@ function loadUserConfigFile(): any {
     const ext = path.extname(p);
     if (ext === '.ts' || ext === '.cts') {
       try {
-        // Attempt to register ts-node from this library's dependency
+        // Prefer programmatic ts-node registration for robust CJS require of TS files
         try {
-          try { (req as any).resolve('ts-node/register/transpile-only'); (req as any)('ts-node/register/transpile-only'); }
-          catch { try { (req as any).resolve('ts-node/register'); (req as any)('ts-node/register'); } catch {}
+          const tsnode = (req as any)('ts-node');
+          if (tsnode && typeof tsnode.register === 'function') {
+            tsnode.register({ transpileOnly: true, compilerOptions: { module: 'commonjs', esModuleInterop: true } });
+          } else {
+            // Fallback to legacy register modules
+            try { (req as any).resolve('ts-node/register/transpile-only'); (req as any)('ts-node/register/transpile-only'); }
+            catch { try { (req as any).resolve('ts-node/register'); (req as any)('ts-node/register'); } catch {} }
           }
         } catch {}
         const mod = req(p);

@@ -26,13 +26,23 @@ export const mapRoutes = async (
   try {
     console.log(`simple-fake-api: searching for routes in: ${apiPath} (pattern: ${pattern}, ignore: collections/*)`);
   } catch {}
-  const files = await glob(pattern, { cwd: apiPath, ignore: 'collections/*' });
+  let files = await glob(pattern, { cwd: apiPath, ignore: 'collections/*' });
+  let effectiveExt: 'js' | 'ts' = routeFileExtension;
+  if (files.length === 0 && routeFileExtension === 'js') {
+    // Auto-detect TypeScript route files if no JS files found
+    const tsFiles = await glob('**/*.ts', { cwd: apiPath, ignore: 'collections/*' });
+    if (tsFiles.length > 0) {
+      try { console.log(`simple-fake-api: no .js routes found, but found ${tsFiles.length} .ts route file(s). Switching to .ts.`); } catch {}
+      files = tsFiles;
+      effectiveExt = 'ts';
+    }
+  }
   try {
     console.log(`simple-fake-api: found ${files.length} file(s): ${files.join(', ')}`);
   } catch {}
 
   // If we're dealing with TypeScript route files, try to register ts-node to allow runtime loading
-  const isTs = routeFileExtension === 'ts';
+  const isTs = effectiveExt === 'ts';
   let req: NodeRequire | null = null;
   if (isTs) {
     try {
@@ -53,12 +63,12 @@ export const mapRoutes = async (
   }
 
   for (const file of files) {
-    const extRegex = new RegExp(`\\.${routeFileExtension}$`);
+    const extRegex = new RegExp(`\\.${effectiveExt}$`);
     let route = '/' + file.replace(extRegex, '');
     const hasParam = route.includes(wildcardChar);
     route = route.replace(new RegExp(wildcardChar + '([^/]+)', 'g'), ':$1');
 
-    if (file.endsWith(`/index.${routeFileExtension}`)) {
+    if (file.endsWith(`/index.${effectiveExt}`)) {
       route = route.replace('/index', '');
     }
 
