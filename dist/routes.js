@@ -1,5 +1,6 @@
 import { glob } from 'glob';
 import path from 'path';
+import { createRequire } from 'module';
 /**
  * Mapeia arquivos JavaScript/TypeScript para definições de rota, separando-os
  * em rotas literais e rotas com parâmetros para garantir a ordem correta.
@@ -14,6 +15,29 @@ export const mapRoutes = async (apiDir, wildcardChar, routeFileExtension = 'js')
     const apiPath = path.join(currentDir, apiDir);
     const pattern = `**/*.${routeFileExtension}`;
     const files = await glob(pattern, { cwd: apiPath, ignore: 'collections/*' });
+    // If we're dealing with TypeScript route files, try to register ts-node to allow runtime loading
+    const isTs = routeFileExtension === 'ts';
+    let req = null;
+    if (isTs) {
+        try {
+            req = createRequire(import.meta.url);
+            try {
+                // Prefer transpile-only for speed; fall back to full register
+                req.resolve('ts-node/register/transpile-only');
+                require('ts-node/register/transpile-only');
+            }
+            catch {
+                try {
+                    req.resolve('ts-node/register');
+                    require('ts-node/register');
+                }
+                catch {
+                    console.warn('simple-fake-api: ts-node not found. Attempting native import of .ts files may fail. Install devDependency: ts-node');
+                }
+            }
+        }
+        catch { }
+    }
     for (const file of files) {
         const extRegex = new RegExp(`\\.${routeFileExtension}$`);
         let route = '/' + file.replace(extRegex, '');
@@ -24,8 +48,17 @@ export const mapRoutes = async (apiDir, wildcardChar, routeFileExtension = 'js')
         }
         const modulePath = path.join(apiPath, file);
         try {
-            const handlers = await import(modulePath);
-            Object.keys(handlers).forEach((method) => {
+            let handlers;
+            if (isTs && req) {
+                // Use CommonJS require through ts-node hook so .ts files are transpiled on the fly
+                const mod = req(modulePath);
+                handlers = (mod && (mod.default ?? mod));
+            }
+            else {
+                const mod = await import(modulePath);
+                handlers = (mod && mod.default ? mod.default : mod);
+            }
+            Object.keys(handlers || {}).forEach((method) => {
                 const normalized = method.toUpperCase();
                 const valid = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD', 'ALL'];
                 if (!valid.includes(normalized))

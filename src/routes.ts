@@ -1,6 +1,7 @@
 import type { Express } from 'express';
 import { glob } from 'glob';
 import path from 'path';
+import { createRequire } from 'module';
 import type { RouteDefinition, RouteHandlers } from './utils/types.js';
 
 /**
@@ -23,6 +24,27 @@ export const mapRoutes = async (
   const pattern = `**/*.${routeFileExtension}`;
   const files = await glob(pattern, { cwd: apiPath, ignore: 'collections/*' });
 
+  // If we're dealing with TypeScript route files, try to register ts-node to allow runtime loading
+  const isTs = routeFileExtension === 'ts';
+  let req: NodeRequire | null = null;
+  if (isTs) {
+    try {
+      req = createRequire(import.meta.url);
+      try {
+        // Prefer transpile-only for speed; fall back to full register
+        (req as any).resolve('ts-node/register/transpile-only');
+        (require as any)('ts-node/register/transpile-only');
+      } catch {
+        try {
+          (req as any).resolve('ts-node/register');
+          (require as any)('ts-node/register');
+        } catch {
+          console.warn('simple-fake-api: ts-node not found. Attempting native import of .ts files may fail. Install devDependency: ts-node');
+        }
+      }
+    } catch {}
+  }
+
   for (const file of files) {
     const extRegex = new RegExp(`\\.${routeFileExtension}$`);
     let route = '/' + file.replace(extRegex, '');
@@ -35,12 +57,21 @@ export const mapRoutes = async (
 
     const modulePath = path.join(apiPath, file);
     try {
-      const handlers: RouteHandlers = await import(modulePath);
-      Object.keys(handlers).forEach((method) => {
+      let handlers: RouteHandlers;
+      if (isTs && req) {
+        // Use CommonJS require through ts-node hook so .ts files are transpiled on the fly
+        const mod = (req as any)(modulePath);
+        handlers = (mod && (mod.default ?? mod)) as RouteHandlers;
+      } else {
+        const mod = await import(modulePath);
+        handlers = (mod && (mod as any).default ? (mod as any).default : (mod as any)) as RouteHandlers;
+      }
+
+      Object.keys(handlers || {}).forEach((method) => {
         const normalized = method.toUpperCase();
         const valid = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD', 'ALL'];
         if (!valid.includes(normalized)) return;
-        const handler = handlers[method];
+        const handler = (handlers as any)[method];
         if (typeof handler === 'function') {
           const definition: RouteDefinition = {
             route: route,
