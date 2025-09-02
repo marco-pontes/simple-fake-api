@@ -4,24 +4,22 @@
 import fs from 'fs';
 import path from 'path';
 import { loadSimpleFakeApiConfigSync } from './fake-api-config-file.js';
-import { resolveBaseDir } from './compatibility.js';
 function loadUserConfigFile() {
     const cfg = loadSimpleFakeApiConfigSync();
     if (cfg)
         return cfg;
-    const base = (process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json'))) ? process.env.INIT_CWD : resolveBaseDir();
     const tried = [
-        path.join(base, 'simple-fake-api.config.js'),
-        path.join(base, 'simple-fake-api.config.cjs'),
-        path.join(base, 'simple-fake-api.config.mjs'),
-        path.join(base, 'simple-fake-api.config.ts'),
-        path.join(base, 'simple-fake-api.config.cts'),
+        path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.js'),
+        path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.cjs'),
+        path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.mjs'),
+        path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.ts'),
+        path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.cts'),
     ];
     const msg = [
-        'simple-fake-api/bundler: could not load simple-fake-api config file.',
+        'simple-fake-api/bundler: could not load simple-fake-api.config.js.',
         `Checked paths: ${tried.join(', ') || '(none found)'}.`,
-        'Ensure the file exists at your project root. Supported extensions: .js, .cjs, .mjs, .ts, .cts.',
-        'TypeScript configs are supported via bundled ts-node at runtime.',
+        'Ensure the file exists at your project root and uses CommonJS export (module.exports = { ... }).',
+        'If you must use ESM (.mjs), convert it to CommonJS or re-export as module.exports for the bundler to load synchronously.',
     ].join(' ');
     throw new Error(msg);
 }
