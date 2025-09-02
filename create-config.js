@@ -6,36 +6,66 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 
-const cwd = process.cwd();
-const targetPath = path.join(cwd, 'simple-fake-api.config.js');
+function findConsumerRoot(pkgDir) {
+  // Prefer INIT_CWD set by npm/yarn; pnpm also sets it to the original cwd of the install command
+  const initCwd = process.env.INIT_CWD;
+  if (initCwd && fs.existsSync(path.join(initCwd, 'package.json'))) return initCwd;
+
+  // npm sets npm_config_local_prefix to the project root
+  const localPrefix = process.env.npm_config_local_prefix;
+  if (localPrefix && fs.existsSync(path.join(localPrefix, 'package.json'))) return localPrefix;
+
+  // Walk up from the package directory until we find a package.json that is not this library's
+  let cur = pkgDir;
+  try {
+    const libPkg = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8'));
+    while (true) {
+      const parent = path.dirname(cur);
+      if (!parent || parent === cur) break;
+      const pj = path.join(parent, 'package.json');
+      if (fs.existsSync(pj)) {
+        try {
+          const data = JSON.parse(fs.readFileSync(pj, 'utf8'));
+          if (data && data.name !== libPkg.name) return parent;
+        } catch {}
+      }
+      cur = parent;
+    }
+  } catch {}
+
+  // Fallback: two levels up from package dir (node_modules/@scope)
+  return path.resolve(pkgDir, '..', '..');
+}
 
 try {
+  // __dirname of this script inside the installed package
+  const __filename = url.fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const consumerRoot = findConsumerRoot(__dirname);
+  const targetPath = path.join(consumerRoot, 'simple-fake-api.config.js');
+
   if (fs.existsSync(targetPath)) {
     // Do not overwrite existing user config
     process.exit(0);
   }
 
   // Resolve the path of this installed package to find the template file
-  // __dirname equivalent for ESM
-  const __filename = url.fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-
-  // In the installed package, examples/simple-fake-api.config.js should be present in the published files.
+  // We already have __dirname above
   // We read it from our package directory.
   const pkgRoot = __dirname; // this file sits at package root after install
   const templatePath = path.join(pkgRoot, 'examples', 'simple-fake-api.config.js');
 
   if (!fs.existsSync(templatePath)) {
     // Fallback: if examples not published, embed minimal template here
-    const fallback = `// simple-fake-api.config.js\nmodule.exports = {\n  port: 5000,\n  apiDir: 'api',\n  collectionsDir: 'collections',\n  wildcardChar: '_',\n  http: {\n    endpoints: {\n      'api-server': {\n        // development has no baseUrl; plugin will compute http://localhost:PORT\n        staging: { baseUrl: 'https://staging.example.com' },\n        production: { baseUrl: 'https://api.example.com' },\n      },\n    },\n  },\n};\n`;
+    const fallback = `// simple-fake-api.config.js\nmodule.exports = {\n  port: 5000,\n  apiDir: 'api',\n  collectionsDir: 'collections',\n  wildcardChar: '_',\n  http: {\n    endpoints: {\n      'api-server': {\n        // development has no baseUrl; plugin will compute http://localhost:PORT\n        staging: { baseUrl: 'https://staging.example.com' },\n        production: { baseUrl: 'https://api.example.com' },\n        'my-custom-env': { baseUrl: 'https://api.example.com' },\n      },\n    },\n  },\n};\n`;
     fs.writeFileSync(targetPath, fallback, 'utf8');
-    console.log('Created simple-fake-api.config.js using fallback template');
+    console.log('Created simple-fake-api.config.js using fallback template at', targetPath);
     process.exit(0);
   }
 
   const content = fs.readFileSync(templatePath, 'utf8');
   fs.writeFileSync(targetPath, content, 'utf8');
-  console.log('Created simple-fake-api.config.js');
+  console.log('Created simple-fake-api.config.js at', targetPath);
 } catch (err) {
   // Non-fatal; do not block installation
   console.warn('[simple-fake-api] postinstall could not create simple-fake-api.config.js:', err?.message || err);
