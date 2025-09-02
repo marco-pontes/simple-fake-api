@@ -4,7 +4,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import { pathToFileURL } from 'url';
 
 export interface InjectedHttpConfig {
   endpoints: Record<string, { baseUrl: string; headers?: Record<string, string> }>;

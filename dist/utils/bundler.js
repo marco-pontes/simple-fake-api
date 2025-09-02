@@ -3,7 +3,6 @@
 // Use the helper below in Vite or Webpack to create that definition from a config object you construct in your bundler config.
 import fs from 'fs';
 import path from 'path';
-import { pathToFileURL } from 'url';
 function loadUserConfigFile() {
     // Resolve base directory: prefer INIT_CWD (original install/run cwd), then process.cwd()
     const initCwd = process.env.INIT_CWD;
