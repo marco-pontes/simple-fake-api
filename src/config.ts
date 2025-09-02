@@ -1,27 +1,16 @@
 import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants.js';
 import type { SimpleFakeApiConfig } from './utils/types.js';
-
-function readInjectedConfig(): Partial<SimpleFakeApiConfig> | undefined {
-  try {
-    // Bundlers will include simple-fake-api.config.js and define a global with its contents
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const anyGlobal: any = (typeof globalThis !== 'undefined') ? (globalThis as any) : {};
-    const cfg = anyGlobal.__SIMPLE_FAKE_API_CONFIG__ as Partial<SimpleFakeApiConfig> | undefined;
-    return cfg;
-  } catch {
-    return undefined;
-  }
-}
+import { loadSimpleFakeApiConfigSync } from './utils/config-loader.js';
 
 /**
- * Lê e valida as configurações da Simple Fake API. Agora lidas de configuração injetada pelo bundler.
+ * Lê e valida as configurações da Simple Fake API a partir do arquivo simple-fake-api.config.* de forma síncrona.
  * @returns {SimpleFakeApiConfig} O objeto de configuração validado.
  * @throws {Error} Se o caractere curinga for inválido, o processo é encerrado.
  */
 export const loadConfig = (): SimpleFakeApiConfig => {
   let config: SimpleFakeApiConfig = { ...DEFAULT_CONFIG };
 
-  const userConfig = readInjectedConfig();
+  const userConfig = loadSimpleFakeApiConfigSync();
   if (userConfig) {
     config = { ...config, ...userConfig } as SimpleFakeApiConfig;
   } else {

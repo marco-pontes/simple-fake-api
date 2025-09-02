@@ -112,14 +112,6 @@ function buildHttpForEnv(cfg: FullConfigFileShape, envName: string): InjectedHtt
 export function setupSimpleFakeApiHttpRoutes(environment: string): Record<string, any> {
   const cfg = loadUserConfigFile() as FullConfigFileShape;
   const http = buildHttpForEnv(cfg, environment);
-  // Expose both HTTP and server config to runtime
-  const serverConfig = {
-    port: cfg.port,
-    apiDir: cfg.apiDir,
-    collectionsDir: cfg.collectionsDir,
-    wildcardChar: cfg.wildcardChar,
-    routeFileExtension: (cfg as any).routeFileExtension || 'js',
-  };
   // Helpful log to show which config file and env were used
   try {
     const initCwd = process.env.INIT_CWD;
@@ -135,7 +127,6 @@ export function setupSimpleFakeApiHttpRoutes(environment: string): Record<string
   } catch {}
   return {
     __SIMPLE_FAKE_API_HTTP__: JSON.stringify(http),
-    __SIMPLE_FAKE_API_CONFIG__: JSON.stringify(serverConfig),
   };
 }
 

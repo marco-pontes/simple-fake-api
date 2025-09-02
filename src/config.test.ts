@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } fr
 const getLoadConfig = async () => (await import('./config')).loadConfig;
 import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from '@/utils/constants';
 
-// Helper to build a fake injected config object
+// Helper to build a fake config object
 const makeCfg = (overrides?: Record<string, any>) => ({
   port: 5000,
   apiDir: 'api',
@@ -17,6 +17,13 @@ let cwdSpy: any;
 let exitSpy: any;
 let infoSpy: MockInstance;
 let errorSpy: MockInstance;
+
+// Helper to mock the config loader return value before importing loadConfig
+const mockLoader = (value: any) => {
+  vi.doMock('./utils/config-loader', () => ({
+    loadSimpleFakeApiConfigSync: () => value,
+  }));
+};
 
 describe('loadConfig', () => {
   beforeEach(() => {
@@ -36,59 +43,38 @@ describe('loadConfig', () => {
   });
 
   afterEach(() => {
+    vi.resetModules();
     vi.restoreAllMocks();
   });
 
-  it('uses default config when injected global is missing', async () => {
-    // Ensure no global is set
-    // @ts-ignore
-    delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
-
+  it('uses default config when loader returns undefined', async () => {
+    mockLoader(undefined);
     const loadConfig = await getLoadConfig();
     const cfg = loadConfig();
     expect(cfg).toEqual(DEFAULT_CONFIG);
-    // Should log info about using defaults
     expect(infoSpy).toHaveBeenCalled();
   });
 
   it('merges user config with defaults when provided', async () => {
-    // @ts-ignore
-    globalThis.__SIMPLE_FAKE_API_CONFIG__ = makeCfg({ port: 1234, apiDir: 'apis', wildcardChar: '_', collectionsDir: 'cols' });
+    mockLoader(makeCfg({ port: 1234, apiDir: 'apis', wildcardChar: '_', collectionsDir: 'cols' }));
     const loadConfig = await getLoadConfig();
     const cfg = loadConfig();
     expect(cfg).toEqual({ ...DEFAULT_CONFIG, port: 1234, apiDir: 'apis', wildcardChar: '_', collectionsDir: 'cols' });
-    // @ts-ignore
-    delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
   });
 
   it('accepts valid single-character wildcardChar', async () => {
     for (const ch of Array.from(VALID_WILDCARD_CHARS)) {
-      vi.restoreAllMocks();
-      // Re-setup spies for each iteration
-      cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue('/tmp/project');
-      infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      exitSpy = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
-        const err: any = new Error('process.exit called');
-        err.code = code;
-        throw err;
-      }) as any);
-      // @ts-ignore
-      globalThis.__SIMPLE_FAKE_API_CONFIG__ = makeCfg({ wildcardChar: ch });
-
+      vi.resetModules();
+      mockLoader(makeCfg({ wildcardChar: ch }));
       const loadConfig = await getLoadConfig();
       const cfg = loadConfig();
       expect(cfg.wildcardChar).toBe(ch);
       expect(errorSpy).not.toHaveBeenCalled();
-      // @ts-ignore
-      delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
     }
   });
 
   it('exits with code 1 when wildcardChar is invalid (not in allowed set)', async () => {
-    // @ts-ignore
-    globalThis.__SIMPLE_FAKE_API_CONFIG__ = makeCfg({ wildcardChar: 'x' });
-
+    mockLoader(makeCfg({ wildcardChar: 'x' }));
     try {
       const loadConfig = await getLoadConfig();
       loadConfig();
@@ -98,16 +84,11 @@ describe('loadConfig', () => {
       expect(e.message).toBe('process.exit called');
       expect(e.code).toBe(1);
       expect(errorSpy).toHaveBeenCalled();
-    } finally {
-      // @ts-ignore
-      delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
     }
   });
 
   it('exits when wildcardChar length is not 1', async () => {
-    // @ts-ignore
-    globalThis.__SIMPLE_FAKE_API_CONFIG__ = makeCfg({ wildcardChar: '**' });
-
+    mockLoader(makeCfg({ wildcardChar: '**' }));
     try {
       const loadConfig = await getLoadConfig();
       loadConfig();
@@ -115,19 +96,13 @@ describe('loadConfig', () => {
     } catch (e: any) {
       expect(e.code).toBe(1);
       expect(errorSpy).toHaveBeenCalled();
-    } finally {
-      // @ts-ignore
-      delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
     }
   });
 
-  it('handles empty injected user config object gracefully', async () => {
-    // @ts-ignore
-    globalThis.__SIMPLE_FAKE_API_CONFIG__ = makeCfg({});
+  it('handles empty user config object gracefully', async () => {
+    mockLoader(makeCfg({}));
     const loadConfig = await getLoadConfig();
     const cfg = loadConfig();
     expect(cfg).toEqual({ ...DEFAULT_CONFIG });
-    // @ts-ignore
-    delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
   });
 });

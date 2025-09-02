@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 
-// Import subject
-import { create } from './http-client';
+// We will dynamically import the subject in tests to allow mocking internals
 
 const originalEnv = { ...process.env };
 let fetchSpy: any;
@@ -24,6 +23,7 @@ describe('http-client', () => {
     // @ts-ignore
     globalThis.__SIMPLE_FAKE_API_HTTP__ = { endpoints: { api: { dev: { baseUrl: 'http://injected' } } } };
     delete process.env.NODE_ENV; // ensure dev
+    const { create } = await import('./http-client');
     const client = create('api');
     await client.get('/users');
     expect(fetchSpy).toHaveBeenCalledWith('http://injected/users', expect.objectContaining({ method: 'GET' }));
@@ -32,30 +32,47 @@ describe('http-client', () => {
     delete globalThis.__SIMPLE_FAKE_API_HTTP__;
   });
 
-  it('falls back to localhost:port from injected server config when no HTTP injection', async () => {
-    // @ts-ignore
-    globalThis.__SIMPLE_FAKE_API_CONFIG__ = { port: 5051, apiDir: 'api', collectionsDir: 'collections', wildcardChar: '_' };
+  it('falls back to localhost:port from config file when no HTTP injection (Node only)', async () => {
     // Ensure no HTTP injection
     // @ts-ignore
     delete globalThis.__SIMPLE_FAKE_API_HTTP__;
 
-    const client = create('anything');
-    await client.get('/ping');
-    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:5051/ping', expect.objectContaining({ method: 'GET' }));
+    // Create a temporary project root with a config file
+    const fs = await import('fs');
+    const path = await import('path');
+    const os = await import('os');
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sfa-'));
+    const prevCwd = process.cwd();
+    const prevInitCwd = process.env.INIT_CWD;
+    delete (process.env as any).INIT_CWD;
+    process.chdir(tmpDir);
+    // Write CommonJS config file
+    fs.writeFileSync(path.join(tmpDir, 'simple-fake-api.config.cjs'), "module.exports = { port: 5051, apiDir: 'api', collectionsDir: 'collections', wildcardChar: '_' }", 'utf8');
 
-    // cleanup
-    // @ts-ignore
-    delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
+    try {
+      vi.resetModules();
+      const { create: createClient } = await import('./http-client');
+      const client = createClient('anything');
+      await client.get('/ping');
+      expect(fetchSpy).toHaveBeenCalledWith('http://localhost:5051/ping', expect.objectContaining({ method: 'GET' }));
+    } finally {
+      process.chdir(prevCwd);
+      if (prevInitCwd) process.env.INIT_CWD = prevInitCwd; else delete (process.env as any).INIT_CWD;
+      try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+    }
   });
 
 
-  it('throws helpful error when neither HTTP injection nor injected port present', async () => {
+  it('throws helpful error when neither HTTP injection nor config file present', async () => {
     // Ensure no globals are set
     // @ts-ignore
     delete globalThis.__SIMPLE_FAKE_API_HTTP__;
-    // @ts-ignore
-    delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
-    expect(() => create('missing')).toThrow(
+    vi.resetModules();
+    vi.doMock('./utils/config-loader.js', () => ({
+      loadSimpleFakeApiConfigSync: () => undefined,
+    }));
+    const { create: createClient } = await import('./http-client');
+    expect(() => createClient('missing')).toThrow(
       'simple-fake-api/http: no configuration provided. Provide build-time config via setupSimpleFakeApiHttpRoutes in your bundler or inject __SIMPLE_FAKE_API_HTTP__',
     );
   });
@@ -65,6 +82,7 @@ describe('http-client', () => {
     // @ts-ignore
     globalThis.__SIMPLE_FAKE_API_HTTP__ = { endpoints: { api: { dev: { baseUrl: 'http://injected' } } } };
     delete process.env.NODE_ENV;
+    const { create } = await import('./http-client');
     const client = create('api');
     await client.post('/a', { a: 1 });
     await client.put('/b', { b: 2 });
@@ -81,6 +99,7 @@ describe('http-client', () => {
   it('throws when endpoint name not found under injected config', async () => {
     // @ts-ignore
     globalThis.__SIMPLE_FAKE_API_HTTP__ = { endpoints: { known: { baseUrl: 'http://x' } } };
+    const { create } = await import('./http-client');
     expect(() => create('missing')).toThrow(/endpoint "missing" not found/);
     // @ts-ignore
     delete globalThis.__SIMPLE_FAKE_API_HTTP__;

@@ -10,6 +10,7 @@ import type {
   CreateOptions,
   Client,
 } from './utils/types.js';
+import { createRequire } from 'module';
 // HTTP client reads build-time injected config; no legacy package.json support
 // Re-export the Client type for consumers importing from the http subpath
 export type { Client } from './utils/types.js';
@@ -125,18 +126,49 @@ export function create(endpointName: string, options?: CreateOptions): Client {
     const factory = buildFactory(injected as HttpClientConfig);
     return factory.create(endpointName, options);
   }
-  // 2) Node/dev: fallback to localhost:<port> from injected server config (bundler-provided)
-  const injectedPort = (() => {
+  // 2) Node/dev: fallback to localhost:<port> from simple-fake-api.config.* (synchronous load in Node only)
+  const nodePort = (() => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const anyGlobal: any = (typeof globalThis !== 'undefined') ? (globalThis as any) : {};
-      return anyGlobal.__SIMPLE_FAKE_API_CONFIG__?.port as number | undefined;
+      // Avoid bundlers: only attempt in real Node
+      // @ts-ignore
+      const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
+      if (!isNode) return undefined;
+      // Lazy, inline sync load of config file to obtain the port (avoid hard dependency for browser bundles)
+      const req = createRequire(import.meta.url);
+      const fs = req('fs') as typeof import('fs');
+      const path = req('path') as typeof import('path');
+      const initCwd = process.env.INIT_CWD;
+      const baseDir = initCwd && fs.existsSync(path.join(initCwd, 'package.json')) ? initCwd : process.cwd();
+      const candidates = [
+        path.join(baseDir, 'simple-fake-api.config.js'),
+        path.join(baseDir, 'simple-fake-api.config.cjs'),
+        path.join(baseDir, 'simple-fake-api.config.mjs'),
+        path.join(baseDir, 'simple-fake-api.config.ts'),
+        path.join(baseDir, 'simple-fake-api.config.cts'),
+      ];
+      for (const p of candidates) {
+        if (!fs.existsSync(p)) continue;
+        const ext = path.extname(p);
+        try {
+          if (ext === '.ts' || ext === '.cts') {
+            try { req.resolve('ts-node/register'); (req as any)('ts-node/register'); } catch {}
+            const mod = req(p);
+            const cfg: any = mod && (mod.default ?? mod);
+            if (cfg?.port) return cfg.port as number;
+          } else {
+            const mod = req(p);
+            const cfg: any = mod && (mod.default ?? mod);
+            if (cfg?.port) return cfg.port as number;
+          }
+        } catch { continue; }
+      }
+      return undefined;
     } catch {
       return undefined;
     }
   })();
-  if (injectedPort) {
-    const factory = buildFactory({ endpoints: {} as any } as HttpClientConfig, `http://localhost:${injectedPort}`);
+  if (nodePort) {
+    const factory = buildFactory({ endpoints: {} as any } as HttpClientConfig, `http://localhost:${nodePort}`);
     return factory.create(endpointName, options);
   }
   // Last resort: error
