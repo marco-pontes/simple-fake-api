@@ -1,6 +1,6 @@
 {
   "name": "@marco-pontes/simple-fake-api",
-  "version": "1.2.10",
+  "version": "1.2.12",
   "description": "A Node.js library for creating fake APIs from file structure.",
   "main": "dist/index.js",
   "type": "module",

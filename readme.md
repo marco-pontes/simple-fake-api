@@ -447,6 +447,56 @@ start();
 - Dynamic segments not working? Check `simple-fake-api-config.wildcardChar` matches your filenames.
 - ESM import errors? Ensure `"type": "module"` in your package.json, or use .cjs/interop accordingly.
 
+### Debug logging (Vite and bundlers)
+
+Loader order and rules:
+- The config loader looks for files in this order: simple-fake-api.config.cjs, .mjs, .cts, .ts, .js.
+- It detects your project package.json "type" to understand the module environment.
+- Loading method per extension:
+  - .cjs: loaded via require().
+  - .mjs: tries require() (works if transpiled to CJS by your setup); dynamic import is not used to keep bundlers synchronous.
+  - .cts and .ts: ts-node is auto-registered and then require() is used.
+  - .js: loaded via require(); if your project is type=module and this .js is ESM-only, require may fail — prefer .mjs or .cjs in that case.
+
+You can enable verbose debug logs from the simple-fake-api bundler/config loader to diagnose why a config file was not found or loaded.
+
+- Environment variables that enable debug output:
+  - SIMPLE_FAKE_API_DEBUG=1
+  - SIMPLE_FAKE_API_BUNDLER_DEBUG=1
+
+When either of these is set, the bundler helper and config loader will print:
+- The resolved base directory used to search for your config
+- The list of candidate paths it will try
+- Per-candidate existence checks and load attempts (with errors if any)
+
+Examples (Vite):
+
+- macOS/Linux
+  - Inline when running Vite directly
+    ```bash
+    SIMPLE_FAKE_API_DEBUG=1 vite
+    ```
+  - Via npm script in your package.json
+    ```jsonc
+    {
+      "scripts": {
+        "dev": "SIMPLE_FAKE_API_DEBUG=1 vite"
+      }
+    }
+    ```
+- Windows (PowerShell)
+  ```powershell
+  $env:SIMPLE_FAKE_API_DEBUG=1; vite
+  ```
+- Windows (cmd.exe)
+  ```bat
+  set SIMPLE_FAKE_API_DEBUG=1 && vite
+  ```
+
+Notes:
+- The same applies to SIMPLE_FAKE_API_BUNDLER_DEBUG if you prefer that variable name.
+- The Vite config should use the synchronous helper pattern shown above to avoid async timing with define.
+
 ## Publishing to npm
 
 Follow these steps to publish this package to npm:
