@@ -131,6 +131,11 @@ module.exports = {
 };
 ```
 
+Troubleshooting: bundler cannot load config
+- The bundler helper loads simple-fake-api.config.js synchronously. Prefer CommonJS export (module.exports = { ... }).
+- The loader searches from your project root using INIT_CWD (when available) or process.cwd(). It checks these files in order: simple-fake-api.config.js, .cjs, .mjs. ESM-only .mjs is not supported synchronously.
+- If you see an error saying it “could not load simple-fake-api.config.js”, ensure the file exists at the project root and uses CommonJS export, or rename it to .cjs.
+
 Configuration options and defaults:
 
 | Key            | Type   | Description                                                                 | Default       | Allowed values / Notes                                           |

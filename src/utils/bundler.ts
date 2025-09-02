@@ -21,29 +21,48 @@ interface FullConfigFileShape {
 }
 
 function loadUserConfigFile(): any {
-  const cfgPath = path.join(process.cwd(), 'simple-fake-api.config.js');
-  // Try require (CommonJS)
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const mod = require(cfgPath);
-    return mod?.default ?? mod;
-  } catch {
-    // Try dynamic import (ESM)
-    try {
-      const url = pathToFileURL(cfgPath).href;
-      // @ts-ignore
-        const mod: any = (new Function('u', 'return import(u)'))(url);
-      // Not awaitable synchronously; fall back to reading file as JSON-like CJS
-    } catch {
-      // ignore
+  // Resolve base directory: prefer INIT_CWD (original install/run cwd), then process.cwd()
+  const initCwd = process.env.INIT_CWD;
+  const baseDir = initCwd && fs.existsSync(path.join(initCwd, 'package.json')) ? initCwd : process.cwd();
+  const candidates = [
+    path.join(baseDir, 'simple-fake-api.config.js'),
+    path.join(baseDir, 'simple-fake-api.config.cjs'),
+    path.join(baseDir, 'simple-fake-api.config.mjs'),
+  ];
+
+  const tried: string[] = [];
+
+  // Try CommonJS via require for .js/.cjs
+  for (const p of candidates) {
+    tried.push(p);
+    if (!fs.existsSync(p)) continue;
+    const ext = path.extname(p);
+    if (ext === '.js' || ext === '.cjs') {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const mod = require(p);
+        return (mod && (mod.default ?? mod));
+      } catch (e: any) {
+        // If the file is ESM-only, require will throw ERR_REQUIRE_ESM; we will handle below
+        if (e && (e.code === 'ERR_REQUIRE_ESM' || /Cannot use import statement/.test(String(e.message)))) {
+          // fall through to ESM note below
+        } else {
+          // Other errors: rethrow with context
+          throw new Error(`simple-fake-api/bundler: failed to require ${p}: ${e?.message || e}`);
+        }
+      }
     }
   }
-  // Last resort: attempt to eval module.exports style or JSON
-  try {
-    const raw = fs.readFileSync(cfgPath, 'utf8');
-    if (raw.trim().startsWith('{')) return JSON.parse(raw);
-  } catch {}
-  throw new Error('simple-fake-api/bundler: could not load simple-fake-api.config.js');
+
+  // We intentionally avoid async dynamic import here to keep bundler config synchronous.
+  // Suggest using CommonJS export when ESM is detected.
+  const msg = [
+    'simple-fake-api/bundler: could not load simple-fake-api.config.js.',
+    `Checked paths: ${tried.join(', ') || '(none found)'}.`,
+    'Ensure the file exists at your project root and uses CommonJS export (module.exports = { ... }).',
+    'If you must use ESM (.mjs), convert it to CommonJS or re-export as module.exports for the bundler to load synchronously.',
+  ].join(' ');
+  throw new Error(msg);
 }
 
 function buildHttpForEnv(cfg: FullConfigFileShape, envName: string): InjectedHttpConfig {
