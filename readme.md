@@ -18,6 +18,9 @@ A small, fast file‑based fake API server for Node.js. Define endpoints by crea
   - Alternatively, you can generate the default configuration via the CLI at any time:
     - npx @marco-pontes/simple-fake-api init
     - or if installed locally: npm run simple-fake-api init (or just simple-fake-api init if available in PATH)
+  - The CLI and postinstall will choose the correct file extension based on your project's module type:
+    - CommonJS projects: simple-fake-api.config.cjs (module.exports)
+    - ESM projects ("type": "module"): simple-fake-api.config.js (export default)
 
 - Prerequisites: Node.js >= 18 (tested with Node 22.18.0)
 - Install:
@@ -109,7 +112,7 @@ Open <http://localhost:5000/ping>
 
 ## Configuration (simple-fake-api.config.js)
 
-Create a file named simple-fake-api.config.js at your project root that exports the configuration object:
+Create a file named simple-fake-api.config.js at your project root that exports the configuration object. If your project package.json has "type": "module", prefer simple-fake-api.config.js with ESM syntax (export default {...}); for CommonJS projects, the CLI/postinstall will generate simple-fake-api.config.cjs using module.exports.
 
 ```js
 // simple-fake-api.config.js (CommonJS)

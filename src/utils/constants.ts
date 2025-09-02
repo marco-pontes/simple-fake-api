@@ -9,6 +9,7 @@ export const DEFAULT_CONFIG: SimpleFakeApiConfig = {
   apiDir: 'api',
   wildcardChar: '_',
   collectionsDir: 'collections',
+  routeFileExtension: 'js',
 };
 
 export const VALID_WILDCARD_CHARS = new Set([

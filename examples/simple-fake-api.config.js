@@ -5,6 +5,8 @@ module.exports = {
   apiDir: 'api',
   collectionsDir: 'collections',
   wildcardChar: '_',
+  // Choose which route file extension to map: 'js' or 'ts'
+  routeFileExtension: 'ts',
   http: {
     endpoints: {
       'api-server': {

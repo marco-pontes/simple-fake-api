@@ -7,17 +7,19 @@ import path from 'path';
  * @param {string} wildcardChar O caractere curinga para parâmetros de rota.
  * @returns {Promise<{literals: RouteDefinition[], params: RouteDefinition[]}>} Listas de definições de rota.
  */
-export const mapRoutes = async (apiDir, wildcardChar) => {
+export const mapRoutes = async (apiDir, wildcardChar, routeFileExtension = 'js') => {
     const literalRouteDefinitions = [];
     const paramRouteDefinitions = [];
     const currentDir = process.cwd();
     const apiPath = path.join(currentDir, apiDir);
-    const files = await glob('**/*.js', { cwd: apiPath, ignore: 'collections/*' });
+    const pattern = `**/*.${routeFileExtension}`;
+    const files = await glob(pattern, { cwd: apiPath, ignore: 'collections/*' });
     for (const file of files) {
-        let route = '/' + file.replace(/\.js$/, '');
+        const extRegex = new RegExp(`\\.${routeFileExtension}$`);
+        let route = '/' + file.replace(extRegex, '');
         const hasParam = route.includes(wildcardChar);
         route = route.replace(new RegExp(wildcardChar + '([^/]+)', 'g'), ':$1');
-        if (file.endsWith('/index.js')) {
+        if (file.endsWith(`/index.${routeFileExtension}`)) {
             route = route.replace('/index', '');
         }
         const modulePath = path.join(apiPath, file);

@@ -102,6 +102,7 @@ export function setupSimpleFakeApiHttpRoutes(environment: string): Record<string
     apiDir: cfg.apiDir,
     collectionsDir: cfg.collectionsDir,
     wildcardChar: cfg.wildcardChar,
+    routeFileExtension: (cfg as any).routeFileExtension || 'js',
   };
   return {
     __SIMPLE_FAKE_API_HTTP__: JSON.stringify(http),

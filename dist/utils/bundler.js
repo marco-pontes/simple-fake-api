@@ -85,6 +85,7 @@ export function setupSimpleFakeApiHttpRoutes(environment) {
         apiDir: cfg.apiDir,
         collectionsDir: cfg.collectionsDir,
         wildcardChar: cfg.wildcardChar,
+        routeFileExtension: cfg.routeFileExtension || 'js',
     };
     return {
         __SIMPLE_FAKE_API_HTTP__: JSON.stringify(http),

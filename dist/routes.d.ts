@@ -7,7 +7,7 @@ import type { RouteDefinition } from './utils/types.js';
  * @param {string} wildcardChar O caractere curinga para parâmetros de rota.
  * @returns {Promise<{literals: RouteDefinition[], params: RouteDefinition[]}>} Listas de definições de rota.
  */
-export declare const mapRoutes: (apiDir: string, wildcardChar: string) => Promise<{
+export declare const mapRoutes: (apiDir: string, wildcardChar: string, routeFileExtension?: "js" | "ts") => Promise<{
     literals: RouteDefinition[];
     params: RouteDefinition[];
 }>;

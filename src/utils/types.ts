@@ -7,6 +7,7 @@ export interface SimpleFakeApiConfig {
   apiDir: string;
   wildcardChar: string;
   collectionsDir: string;
+  routeFileExtension?: 'js' | 'ts';
 }
 
 export interface SimpleFakeApi {

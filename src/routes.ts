@@ -13,20 +13,23 @@ import type { RouteDefinition, RouteHandlers } from './utils/types.js';
 export const mapRoutes = async (
   apiDir: string,
   wildcardChar: string,
+  routeFileExtension: 'js' | 'ts' = 'js',
 ): Promise<{ literals: RouteDefinition[]; params: RouteDefinition[] }> => {
   const literalRouteDefinitions: RouteDefinition[] = [];
   const paramRouteDefinitions: RouteDefinition[] = [];
   const currentDir = process.cwd();
   const apiPath = path.join(currentDir, apiDir);
 
-  const files = await glob('**/*.js', { cwd: apiPath, ignore: 'collections/*' });
+  const pattern = `**/*.${routeFileExtension}`;
+  const files = await glob(pattern, { cwd: apiPath, ignore: 'collections/*' });
 
   for (const file of files) {
-    let route = '/' + file.replace(/\.js$/, '');
+    const extRegex = new RegExp(`\\.${routeFileExtension}$`);
+    let route = '/' + file.replace(extRegex, '');
     const hasParam = route.includes(wildcardChar);
     route = route.replace(new RegExp(wildcardChar + '([^/]+)', 'g'), ':$1');
 
-    if (file.endsWith('/index.js')) {
+    if (file.endsWith(`/index.${routeFileExtension}`)) {
       route = route.replace('/index', '');
     }
 

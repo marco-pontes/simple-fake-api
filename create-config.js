@@ -42,7 +42,15 @@ try {
   const __filename = url.fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
   const consumerRoot = findConsumerRoot(__dirname);
-  const targetPath = path.join(consumerRoot, 'simple-fake-api.config.js');
+  // detect consumer module type
+  let consumerType = 'commonjs';
+  try {
+    const pkgJson = JSON.parse(fs.readFileSync(path.join(consumerRoot, 'package.json'), 'utf8'));
+    if (pkgJson && pkgJson.type === 'module') consumerType = 'module';
+  } catch {}
+  const isModule = consumerType === 'module';
+  const fileName = isModule ? 'simple-fake-api.config.js' : 'simple-fake-api.config.cjs';
+  const targetPath = path.join(consumerRoot, fileName);
 
   if (fs.existsSync(targetPath)) {
     // Do not overwrite existing user config
@@ -50,22 +58,45 @@ try {
   }
 
   // Resolve the path of this installed package to find the template file
-  // We already have __dirname above
-  // We read it from our package directory.
   const pkgRoot = __dirname; // this file sits at package root after install
   const templatePath = path.join(pkgRoot, 'examples', 'simple-fake-api.config.js');
 
   if (!fs.existsSync(templatePath)) {
-    // Fallback: if examples not published, embed minimal template here
-    const fallback = `// simple-fake-api.config.js\nmodule.exports = {\n  port: 5000,\n  apiDir: 'api',\n  collectionsDir: 'collections',\n  wildcardChar: '_',\n  http: {\n    endpoints: {\n      'api-server': {\n        // development has no baseUrl; plugin will compute http://localhost:PORT\n        staging: { baseUrl: 'https://staging.example.com' },\n        production: { baseUrl: 'https://api.example.com' },\n        'my-custom-env': { baseUrl: 'https://api.example.com' },\n      },\n    },\n  },\n};\n`;
-    fs.writeFileSync(targetPath, fallback, 'utf8');
-    console.log('Created simple-fake-api.config.js using fallback template at', targetPath);
+    // Fallback: embed minimal template here, with correct syntax and routeFileExtension option
+    const obj = `{
+  port: 5000,
+  apiDir: 'api',
+  collectionsDir: 'collections',
+  wildcardChar: '_',
+  routeFileExtension: 'ts',
+  http: {
+    endpoints: {
+      'api-server': {
+        // development has no baseUrl; plugin will compute http://localhost:PORT
+        staging: { baseUrl: 'https://staging.example.com' },
+        production: { baseUrl: 'https://api.example.com' },
+      },
+    },
+  },
+}`;
+    const content = isModule ? `// simple-fake-api.config.js (ESM)\nexport default ${obj};\n` : `// simple-fake-api.config.cjs (CJS)\nmodule.exports = ${obj};\n`;
+    fs.writeFileSync(targetPath, content, 'utf8');
+    console.log(`Created ${fileName} using fallback template at`, targetPath);
     process.exit(0);
   }
 
-  const content = fs.readFileSync(templatePath, 'utf8');
+  // Use example template as base and adjust filename extension if needed
+  let content = fs.readFileSync(templatePath, 'utf8');
+  // ensure routeFileExtension exists (if the example template already has it, fine)
+  if (!/routeFileExtension\s*:/.test(content)) {
+    content = content.replace("wildcardChar: '_',", "wildcardChar: '_',\n  routeFileExtension: 'ts',");
+  }
+  if (isModule) {
+    // convert CommonJS example to ESM export default
+    content = content.replace('module.exports = ', 'export default ');
+  }
   fs.writeFileSync(targetPath, content, 'utf8');
-  console.log('Created simple-fake-api.config.js at', targetPath);
+  console.log(`Created ${fileName} at`, targetPath);
 } catch (err) {
   // Non-fatal; do not block installation
   console.warn('[simple-fake-api] postinstall could not create simple-fake-api.config.js:', err?.message || err);

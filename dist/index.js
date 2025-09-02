@@ -36,7 +36,7 @@ export const initialize = async () => {
             next();
         });
         // Mapeia as rotas do diretório da API.
-        const routeDefinitions = await mapRoutes(config.apiDir, config.wildcardChar);
+        const routeDefinitions = await mapRoutes(config.apiDir, config.wildcardChar, (config.routeFileExtension || 'js'));
         addExpressRoutes(app, routeDefinitions.literals, routeDefinitions.params);
         // Atribui a instância inicializada à variável global.
         fastApi = { config, app, collections };

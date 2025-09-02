@@ -44,7 +44,7 @@ export const initialize = async (): Promise<void> => {
     });
 
     // Mapeia as rotas do diretório da API.
-    const routeDefinitions = await mapRoutes(config.apiDir, config.wildcardChar);
+    const routeDefinitions = await mapRoutes(config.apiDir, config.wildcardChar, (config.routeFileExtension || 'js') as 'js' | 'ts');
     addExpressRoutes(app, routeDefinitions.literals, routeDefinitions.params);
 
     // Atribui a instância inicializada à variável global.

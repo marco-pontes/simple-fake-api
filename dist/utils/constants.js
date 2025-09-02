@@ -7,6 +7,7 @@ export const DEFAULT_CONFIG = {
     apiDir: 'api',
     wildcardChar: '_',
     collectionsDir: 'collections',
+    routeFileExtension: 'js',
 };
 export const VALID_WILDCARD_CHARS = new Set([
     '!',
