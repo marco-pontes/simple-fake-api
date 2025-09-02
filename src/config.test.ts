@@ -20,7 +20,7 @@ let errorSpy: MockInstance;
 
 // Helper to mock the config loader return value before importing loadConfig
 const mockLoader = (value: any) => {
-  vi.doMock('./utils/config-loader', () => ({
+  vi.doMock('./utils/fake-api-config-file', () => ({
     loadSimpleFakeApiConfigSync: () => value,
   }));
 };

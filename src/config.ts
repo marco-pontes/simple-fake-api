@@ -1,6 +1,6 @@
 import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants.js';
 import type { SimpleFakeApiConfig } from './utils/types.js';
-import { loadSimpleFakeApiConfigSync } from './utils/config-loader.js';
+import { loadSimpleFakeApiConfigSync } from './utils/fake-api-config-file.js';
 
 /**
  * Lê e valida as configurações da Simple Fake API a partir do arquivo simple-fake-api.config.* de forma síncrona.

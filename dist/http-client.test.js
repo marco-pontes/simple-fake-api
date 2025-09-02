@@ -65,7 +65,7 @@ describe('http-client', () => {
         // @ts-ignore
         delete globalThis.__SIMPLE_FAKE_API_HTTP__;
         vi.resetModules();
-        vi.doMock('./utils/config-loader.js', () => ({
+        vi.doMock('./utils/fake-api-config-file', () => ({
             loadSimpleFakeApiConfigSync: () => undefined,
         }));
         const { create: createClient } = await import('./http-client');
