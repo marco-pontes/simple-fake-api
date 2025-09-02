@@ -1,18 +1,9 @@
 // Example configuration file for simple-fake-api (TypeScript)
 // Export a typed config object. This is for reference; the library's bundler helper expects a JS (.cjs or .js) at build time.
 
-export interface SimpleFakeApiExampleConfig {
-  port: number;
-  apiDir: string;
-  collectionsDir: string;
-  wildcardChar: string;
-  routeFileExtension?: 'js' | 'ts';
-  http?: {
-    endpoints: Record<string, Record<string, { baseUrl: string; headers?: Record<string, string> }>>;
-  };
-}
+import type { SimpleFakeApiConfig } from '@marco-pontes/simple-fake-api/bundler';
 
-const config: SimpleFakeApiExampleConfig = {
+const config: SimpleFakeApiConfig = {
   port: 5000,
   apiDir: 'api',
   collectionsDir: 'collections',

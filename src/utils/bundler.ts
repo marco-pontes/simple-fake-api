@@ -6,6 +6,8 @@ import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
 
+import type { SimpleFakeApiConfig } from './types.js';
+
 export interface InjectedHttpConfig {
   endpoints: Record<string, { baseUrl: string; headers?: Record<string, string> }>;
 }
@@ -28,16 +30,28 @@ function loadUserConfigFile(): any {
     path.join(baseDir, 'simple-fake-api.config.js'),
     path.join(baseDir, 'simple-fake-api.config.cjs'),
     path.join(baseDir, 'simple-fake-api.config.mjs'),
+    path.join(baseDir, 'simple-fake-api.config.ts'),
+    path.join(baseDir, 'simple-fake-api.config.cts'),
   ];
 
   const tried: string[] = [];
 
-  // Try CommonJS via require for .js/.cjs
+  // Try CommonJS via require for .js/.cjs and transpile .ts/.cts on the fly if ts-node/register is available
   const req = createRequire(import.meta.url);
   for (const p of candidates) {
     tried.push(p);
     if (!fs.existsSync(p)) continue;
     const ext = path.extname(p);
+    if (ext === '.ts' || ext === '.cts') {
+      try {
+        // Attempt to register ts-node if present in the consumer project
+        try { req.resolve('ts-node/register'); require('ts-node/register'); } catch {}
+        const mod = req(p);
+        return (mod && (mod.default ?? mod));
+      } catch (e: any) {
+        // Fallthrough to helpful error below
+      }
+    }
     if (ext === '.js' || ext === '.cjs') {
       try {
         const mod = req(p);
@@ -55,7 +69,7 @@ function loadUserConfigFile(): any {
   }
 
   // We intentionally avoid async dynamic import here to keep bundler config synchronous.
-  // Suggest using CommonJS export when ESM is detected.
+  // Suggest using CommonJS export when ESM is detected or use a TypeScript config with ts-node available.
   const msg = [
     'simple-fake-api/bundler: could not load simple-fake-api.config.js.',
     `Checked paths: ${tried.join(', ') || '(none found)'}.`,
@@ -109,3 +123,6 @@ export function setupSimpleFakeApiHttpRoutes(environment: string): Record<string
     __SIMPLE_FAKE_API_CONFIG__: JSON.stringify(serverConfig),
   };
 }
+
+// Public types for consumers' config authoring in examples
+export type { SimpleFakeApiConfig };
