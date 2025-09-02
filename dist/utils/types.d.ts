@@ -2,9 +2,15 @@ import express from 'express';
 export interface SimpleFakeApiConfig {
     port: number;
     apiDir: string;
-    wildcardChar: string;
     collectionsDir: string;
+    wildcardChar: string;
     routeFileExtension?: 'js' | 'ts';
+    http?: {
+        endpoints: Record<string, Record<string, {
+            baseUrl: string;
+            headers?: Record<string, string>;
+        }>>;
+    };
 }
 export interface SimpleFakeApi {
     config: SimpleFakeApiConfig;
