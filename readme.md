@@ -98,17 +98,28 @@ Open <http://localhost:5000/ping>
   - Place JSON Schema files in `api/collections`
   - They are generated at startup and available in any handler via `getCollections()`
 
-## Configuration (package.json)
+## Configuration (simple-fake-api.config.js)
 
-Add a simple-fake-api-config section to your package.json:
+Create a file named simple-fake-api.config.js at your project root that exports the configuration object:
 
-```jsonc
-"simple-fake-api-config": {
-  "port": 5000,
-  "apiDir": "api",
-  "collectionsDir": "collections",
-  "wildcardChar": "_"
-}
+```js
+// simple-fake-api.config.js (CommonJS)
+module.exports = {
+  port: 5000,
+  apiDir: 'api',
+  collectionsDir: 'collections',
+  wildcardChar: '_',
+  // Optional HTTP client mapping for non-development environments
+  http: {
+    endpoints: {
+      'api-server': {
+        // development environment uses http://localhost:PORT automatically
+        staging: { baseUrl: 'https://staging.endpoint.com' },
+        production: { baseUrl: 'https://prod.endpoint.com' },
+      },
+    },
+  },
+};
 ```
 
 Configuration options and defaults:
@@ -317,56 +328,91 @@ Notes
 
 ## Programmatic usage
 
-### New: Environment-aware HTTP client for front-end apps
+### Environment-aware HTTP client for front-end apps (bundler-friendly)
 
 - Import the HTTP client creator from the subpath export:
   - import { create } from '@marco-pontes/simple-fake-api/http'
 
-Configuration in your package.json (consumer project):
+Important changes:
+- HTTP configuration should be provided at build time by your bundler (Vite/Webpack), not from package.json.
+- The client reads a build-time injected global constant named __SIMPLE_FAKE_API_HTTP__.
+- If no config is injected (e.g., local development in Node), the client falls back to http://localhost:<port> using the port from simple-fake-api-config.port in your package.json.
+- For browser bundles, you can inject whichever environments you need (e.g., dev/prod). The client will pick based on NODE_ENV (dev by default).
 
-```jsonc
-{
-  "simple-fake-api-config": {
-    // ... other simple-fake-api server settings ...
-    "http": {
-      "endpoints": {
-      "api-server": {
-        "dev": { "baseUrl": "http://localhost:5000" },
-        "staging": { "baseUrl": "https://staging.endpoint.com" },
-        "prod": { "baseUrl": "https://prod.endpoint.com" }
-      }
-    }
-  }
-}
+Vite example (define from process.env):
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import { setupSimpleFakeApiHttpRoutes } from '@marco-pontes/simple-fake-api/bundler';
+
+export default defineConfig(() => {
+  const http = {
+    endpoints: {
+      'api-server': { dev: { baseUrl: process.env.SIMPLE_FAKE_API_API_SERVER_BASE_URL || 'http://localhost:5000' } },
+    },
+  };
+  return {
+    define: {
+      ...setupSimpleFakeApiHttpRoutes(http),
+    },
+  };
+});
 ```
 
-Usage (auto-load from package.json):
+Build your config object using whatever env variables your project uses. Example:
+- SIMPLE_FAKE_API_API_SERVER_BASE_URL=https://api.example.com
+  - Endpoint name suggestion: derive from your chosen naming, e.g., API_SERVER -> "api-server". The library does not parse envs anymore; you fully control the mapping.
+
+Webpack example:
+
+```js
+// webpack.config.js
+const webpack = require('webpack');
+const { setupSimpleFakeApiHttpRoutes } = require('@marco-pontes/simple-fake-api/bundler');
+
+module.exports = (env) => {
+  const http = {
+    endpoints: {
+      'api-server': { dev: { baseUrl: process.env.SIMPLE_FAKE_API_API_SERVER_BASE_URL || 'http://localhost:5000' } },
+    },
+  };
+  return {
+    // ...
+    plugins: [
+      new webpack.DefinePlugin(setupSimpleFakeApiHttpRoutes(http)), 
+    ],
+  };
+};
+```
+
+Using the client in your app:
 
 ```ts
 import { create } from '@marco-pontes/simple-fake-api/http';
 
-// Load config automatically from your package.json (simple-fake-api-config.http)
-const api = create('api-server', { headers: { /* auth, etc. */ } });
+// Build-time injected config selects the baseUrl for this endpoint name
+const api = create('api-server');
 
-// usage
-// const res = await api.get('/users');
-// const created = await api.post('/users', { name: 'John' });
+const res = await api.get('/users');
+const created = await api.post('/users', { name: 'John' });
 ```
 
-Environment resolution:
-- Defaults to dev when NODE_ENV is not set.
-- test -> test, staging -> staging, production/prod -> prod. You can also pass resolveEnv in config or in package.json via "simple-fake-api-http.resolveEnv" (function not serializable; prefer NODE_ENV).
+Node/local development fallback:
+- If you don’t inject any config (no __SIMPLE_FAKE_API_HTTP__), the client will read your package.json’s simple-fake-api-config.port and use http://localhost:<port> for any endpoint name you pass to create().
+- This lets you run your front-end dev server against the local Simple Fake API without extra setup.
 
-You can embed simple-fake-api in another Node process (if you import from ESM):
+Notes:
+- The library no longer reads the legacy http section from package.json. Provide HTTP client configuration via bundler injection; for local Node development without injection, the client falls back to http://localhost:<port> using simple-fake-api-config.port.
+- For typing HTTP handlers in your Simple Fake API project, import types from the http subpath: import type { Request, Response } from '@marco-pontes/simple-fake-api/http'
+
+Embedding the server in another Node process (optional):
 
 ```ts
 import { initialize, start, getCollections } from 'simple-fake-api';
 
 await initialize();
-
-// optional: access collections programmatically
 console.log(Object.keys(getCollections()));
-
 start();
 ```
 

@@ -1,18 +1,29 @@
 import { DEFAULT_CONFIG, VALID_WILDCARD_CHARS } from './utils/constants.js';
-import { readSimpleFakeApiConfig } from './utils/pkg.js';
+function readInjectedConfig() {
+    try {
+        // Bundlers will include simple-fake-api.config.js and define a global with its contents
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const anyGlobal = (typeof globalThis !== 'undefined') ? globalThis : {};
+        const cfg = anyGlobal.__SIMPLE_FAKE_API_CONFIG__;
+        return cfg;
+    }
+    catch {
+        return undefined;
+    }
+}
 /**
- * Lê e valida as configurações da Simple Fake API a partir do arquivo package.json.
+ * Lê e valida as configurações da Simple Fake API. Agora lidas de configuração injetada pelo bundler.
  * @returns {SimpleFakeApiConfig} O objeto de configuração validado.
  * @throws {Error} Se o caractere curinga for inválido, o processo é encerrado.
  */
 export const loadConfig = () => {
     let config = { ...DEFAULT_CONFIG };
-    const userConfig = readSimpleFakeApiConfig();
+    const userConfig = readInjectedConfig();
     if (userConfig) {
         config = { ...config, ...userConfig };
     }
     else {
-        console.info('Configuração "simple-fake-api-config" não encontrada no package.json. Usando configurações padrão.');
+        console.info('Configuração não encontrada. Usando configurações padrão.');
     }
     const { wildcardChar } = config;
     // A validação agora usa o conjunto de caracteres seguros.

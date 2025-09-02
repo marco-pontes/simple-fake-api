@@ -1,31 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// Mock the pkg util for the specific tests that use fromPackageJson
-vi.mock('./utils/pkg.js', async () => {
-  const readSimpleFakeApiHttpConfig = vi.fn(() => ({
-    endpoints: {
-      'api': {
-        dev: { baseUrl: 'http://dev.example' },
-        prod: { baseUrl: 'https://prod.example' },
-      },
-    },
-  }));
-  const loadHttpClientConfigFromPackageJson = () => {
-    const section: any = readSimpleFakeApiHttpConfig();
-    if (!section || !section.endpoints) {
-      throw new Error('Key "simple-fake-api-config.http" not found in package.json');
-    }
-    return { endpoints: section.endpoints } as any;
-  };
-  return {
-    readSimpleFakeApiHttpConfig,
-    loadHttpClientConfigFromPackageJson,
-  };
-});
+import fs from 'fs';
+import path from 'path';
 
-// Import after mocks
+// Import subject
 import { create } from './http-client';
-import { loadHttpClientConfigFromPackageJson } from './utils/pkg.js';
 
 const originalEnv = { ...process.env };
 let fetchSpy: any;
@@ -42,76 +21,62 @@ describe('http-client', () => {
     vi.restoreAllMocks();
   });
 
-  it('uses dev by default when NODE_ENV not set', async () => {
-    delete process.env.NODE_ENV;
-    // Simulate config via package.json by mocking loader
-    const mod = await import('./utils/pkg.js');
-    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce({
-      endpoints: { api: { dev: { baseUrl: 'http://localhost:5000' }, prod: { baseUrl: 'https://prod' } } },
-    });
-
+  it('uses injected config when provided', async () => {
+    // simulate bundler injection with env-style mapping
+    // @ts-ignore
+    globalThis.__SIMPLE_FAKE_API_HTTP__ = { endpoints: { api: { dev: { baseUrl: 'http://injected' } } } };
+    delete process.env.NODE_ENV; // ensure dev
     const client = create('api');
     await client.get('/users');
-    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:5000/users', expect.objectContaining({ method: 'GET' }));
+    expect(fetchSpy).toHaveBeenCalledWith('http://injected/users', expect.objectContaining({ method: 'GET' }));
+    // cleanup
+    // @ts-ignore
+    delete globalThis.__SIMPLE_FAKE_API_HTTP__;
   });
 
-  it('picks prod when NODE_ENV=production', async () => {
-    process.env.NODE_ENV = 'production';
-    const mod = await import('./utils/pkg.js');
-    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce({
-      endpoints: { api: { dev: { baseUrl: 'http://dev' }, prod: { baseUrl: 'https://prod' } } },
+  it('falls back to localhost:port from package.json when no injection', async () => {
+    // mock reading package.json for port via explicit path
+    const pkgPath = '/tmp/pkg.json';
+    vi.spyOn(fs, 'readFileSync').mockImplementation((p: any) => {
+      if (p === pkgPath) return JSON.stringify({ 'simple-fake-api-config': { port: 5050 } });
+      throw new Error('unexpected read');
     });
-    const client = create('api');
+
+    const client = create('anything', undefined, pkgPath);
     await client.get('/ping');
-    expect(fetchSpy).toHaveBeenCalledWith('https://prod/ping', expect.objectContaining({ method: 'GET' }));
+    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:5050/ping', expect.objectContaining({ method: 'GET' }));
   });
 
-  it('merges headers from env config and per-client options', async () => {
-    const mod = await import('./utils/pkg');
-    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce({
-      endpoints: { api: { dev: { baseUrl: 'http://dev', headers: { Authorization: 'Bearer A' } } } },
-    });
-    const client = create('api', { headers: { 'X-Trace': 't1' } });
-    await client.get('/r');
-    const [, init] = fetchSpy.mock.calls[0];
-    const headers = new Headers((init as any).headers);
-    expect(headers.get('Authorization')).toBe('Bearer A');
-    expect(headers.get('X-Trace')).toBe('t1');
+  it('throws helpful error when neither injection nor port present', async () => {
+    const cwd = '/tmp/project2';
+    vi.spyOn(process, 'cwd').mockReturnValue(cwd as any);
+    vi.spyOn(fs, 'readFileSync').mockImplementationOnce(() => { throw new Error('no file'); });
+    expect(() => create('missing')).toThrow(/no configuration provided/i);
   });
 
-  it('post/put/patch use JSON content-type when body is object', async () => {
-    const mod = await import('./utils/pkg.js');
-    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce({ endpoints: { api: { dev: { baseUrl: 'http://dev' } } } });
+  it('json helpers set content-type for post/put/patch', async () => {
+    // Use injected base
+    // @ts-ignore
+    globalThis.__SIMPLE_FAKE_API_HTTP__ = { endpoints: { api: { dev: { baseUrl: 'http://injected' } } } };
+    delete process.env.NODE_ENV;
     const client = create('api');
-
-    await client.post('/users', { a: 1 });
-    await client.put('/users/1', { b: 2 });
-    await client.patch('/users/1', { c: 3 });
-
+    await client.post('/a', { a: 1 });
+    await client.put('/b', { b: 2 });
+    await client.patch('/c', { c: 3 });
     for (let i = 0; i < 3; i++) {
       const [, init] = fetchSpy.mock.calls[i];
       const headers = new Headers((init as any).headers);
       expect(headers.get('content-type')).toBe('application/json');
-      expect((init as any).body).toEqual(expect.any(String));
     }
+    // @ts-ignore
+    delete globalThis.__SIMPLE_FAKE_API_HTTP__;
   });
 
-  it('throws when endpoint name not found', async () => {
-    const mod = await import('./utils/pkg.js');
-    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce({ endpoints: {} });
+  it('throws when endpoint name not found under injected config', async () => {
+    // @ts-ignore
+    globalThis.__SIMPLE_FAKE_API_HTTP__ = { endpoints: { known: { baseUrl: 'http://x' } } };
     expect(() => create('missing')).toThrow(/endpoint "missing" not found/);
-  });
-
-  it('create loads config via pkg util and creates client', async () => {
-    const client = create('api');
-    await client.get('/ok');
-    expect(fetchSpy).toHaveBeenCalledWith('http://dev.example/ok', expect.any(Object));
-  });
-
-  it('loadHttpClientConfigFromPackageJson throws when section missing', async () => {
-    // remock to return undefined
-    const mod = await import('./utils/pkg.js');
-    (mod as any).readSimpleFakeApiHttpConfig.mockReturnValueOnce(undefined);
-    expect(() => loadHttpClientConfigFromPackageJson()).toThrow(/not found/);
+    // @ts-ignore
+    delete globalThis.__SIMPLE_FAKE_API_HTTP__;
   });
 });

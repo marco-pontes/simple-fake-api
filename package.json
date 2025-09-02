@@ -6,7 +6,8 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
-    "./http": "./dist/http-client.js"
+    "./http": "./dist/http-client.js",
+    "./bundler": "./dist/utils/bundler.js"
   },
   "bin": {
     "simple-fake-api": "./dist/cli.js"
@@ -21,7 +22,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint:format": "npm run lint && npm run format:check",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "postinstall": "node create-config.js"
   },
   "keywords": [
     "fake-api",
@@ -60,7 +62,9 @@
     "dist/**",
     "readme.md",
     "LICENSE",
-    "package.json"
+    "package.json",
+    "examples/simple-fake-api.config.js",
+    "create-config.js"
   ],
   "types": "dist/index.d.ts",
   "repository": {

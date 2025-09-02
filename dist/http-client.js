@@ -1,8 +1,8 @@
 // Lightweight HTTP client factory with environment-aware base URLs
 // Usage in consumer: import { http } from '@marco-pontes/simple-fake-api/http'
 // or: import { httpClient } from '@marco-pontes/simple-fake-api'
-// New public API: create(endpointName, options?) which reads config from package.json
-import { loadHttpClientConfigFromPackageJson } from './utils/pkg.js';
+import fs from 'fs';
+import path from 'path';
 /**
  * Resolve current environment name for selecting endpoint configuration.
  * Priority: config.resolveEnv() -> NODE_ENV (prod/staging/test) -> dev
@@ -40,15 +40,29 @@ const asJsonInit = (body, init) => {
  * Use factory.create(endpointName) to obtain a client with helpers for HTTP verbs.
  */
 // Internal builder to create a client from a resolved config
-const buildFactory = (config) => {
+const buildFactory = (config, defaultBaseUrl) => {
     const env = pickEnv(config);
     function create(endpointName, options) {
         const def = config.endpoints[endpointName];
-        if (!def)
-            throw new Error(`http: endpoint "${endpointName}" not found`);
-        const envCfg = def[env] || def[def.default || 'dev'];
-        if (!envCfg)
-            throw new Error(`http: endpoint "${endpointName}" has no configuration for env ${env}`);
+        let envCfg;
+        if (!def) {
+            // No declaration for this endpoint; use defaultBaseUrl if provided (e.g., from localhost:port fallback)
+            if (defaultBaseUrl) {
+                envCfg = { baseUrl: defaultBaseUrl };
+            }
+            else {
+                throw new Error(`http: endpoint "${endpointName}" not found`);
+            }
+        }
+        else if (def && typeof def === 'object' && 'baseUrl' in def) {
+            // Flattened shape injected by new bundler plugin
+            envCfg = { baseUrl: def.baseUrl, headers: def.headers };
+        }
+        else {
+            envCfg = def[env] || def[def.default || 'dev'];
+            if (!envCfg)
+                throw new Error(`http: endpoint "${endpointName}" has no configuration for env ${env}`);
+        }
         const baseHeaders = { ...(envCfg.headers || {}), ...(options?.headers || {}) };
         const request = async (method, path, init) => {
             const url = joinUrl(envCfg.baseUrl, path);
@@ -77,8 +91,40 @@ const buildFactory = (config) => {
     }
     return { create };
 };
+function resolveInjectedConfig() {
+    try {
+        // Value should be injected at build time by bundlers using the helper in bundler subpath (@marco-pontes/simple-fake-api/bundler)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const anyGlobal = (typeof globalThis !== 'undefined') ? globalThis : {};
+        return anyGlobal.__SIMPLE_FAKE_API_HTTP__;
+    }
+    catch {
+        return undefined;
+    }
+}
 export function create(endpointName, options, customPackageJsonPath) {
-    const cfg = loadHttpClientConfigFromPackageJson(customPackageJsonPath);
-    const factory = buildFactory(cfg);
-    return factory.create(endpointName, options);
+    // 1) Prefer build-time injected config for browser/runtime without FS
+    const injected = resolveInjectedConfig();
+    if (injected && injected.endpoints) {
+        const factory = buildFactory(injected);
+        return factory.create(endpointName, options);
+    }
+    // 2) Node/dev: fallback to localhost:<port> from simple-fake-api-config.port
+    const port = (() => {
+        try {
+            const pkgPath = customPackageJsonPath || path.join(process.cwd(), 'package.json');
+            const raw = fs.readFileSync(pkgPath, 'utf8');
+            const pkg = JSON.parse(raw);
+            return pkg?.['simple-fake-api-config']?.port;
+        }
+        catch {
+            return undefined;
+        }
+    })();
+    if (port) {
+        const factory = buildFactory({ endpoints: {} }, `http://localhost:${port}`);
+        return factory.create(endpointName, options);
+    }
+    // Last resort: error
+    throw new Error('simple-fake-api/http: no configuration provided. Provide build-time config via __SIMPLE_FAKE_API_HTTP__ or set simple-fake-api-config.port for localhost fallback');
 }

@@ -53,7 +53,3 @@ export interface Client {
     baseUrl: string;
     headers: Record<string, string>;
 }
-export interface PackageJsonHttpSection {
-    endpoints: Record<string, any>;
-    resolveEnv?: () => any;
-}

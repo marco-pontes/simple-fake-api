@@ -67,9 +67,3 @@ export interface Client {
   baseUrl: string;
   headers: Record<string, string>;
 }
-
-// Package.json HTTP subsection
-export interface PackageJsonHttpSection {
-  endpoints: Record<string, any>;
-  resolveEnv?: () => any;
-}
