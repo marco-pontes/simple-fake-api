@@ -8,7 +8,7 @@ var config = {
     collectionsDir: 'collections',
     wildcardChar: '_',
     // Choose which route file extension to map: 'js' or 'ts'
-    routeFileExtension: 'ts',
+    routeFileExtension: 'js',
     http: {
         endpoints: {
             'api-server': {

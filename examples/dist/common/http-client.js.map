@@ -1,1 +1,0 @@
-{"version":3,"file":"http-client.js","sourceRoot":"","sources":["../../src/common/http-client.ts"],"names":[],"mappings":"AAAA,sEAAsE;AACtE,qFAAqF;AACrF,0DAA0D;AAE1D,OAAO,EAAE,MAAM,EAAU,MAAM,oCAAoC,CAAC;AAEpE,MAAM,CAAC,MAAM,UAAU,GAAiB,GAAG,EAAE;IAC3C,oEAAoE;IACpE,OAAO,MAAM,CAAC,YAAY,CAAC,CAAC;AAC9B,CAAC,CAAC"}

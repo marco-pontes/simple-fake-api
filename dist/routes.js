@@ -1,7 +1,8 @@
 import { glob } from 'glob';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { createRequire } from 'module';
-import { tryRegisterTsNode, syncRequireModule } from './utils/compatibility.js';
+import { tryRegisterTsNode } from './utils/compatibility.js';
 /**
  * Mapeia arquivos JavaScript/TypeScript para definições de rota, separando-os
  * em rotas literais e rotas com parâmetros para garantir a ordem correta.
@@ -59,14 +60,11 @@ export const mapRoutes = async (apiDir, wildcardChar, routeFileExtension = 'js')
         const modulePath = path.join(apiPath, file);
         try {
             let handlers;
-            if (isTs && req) {
-                // Use CommonJS require through ts-node hook so .ts files are transpiled on the fly
-                const mod = syncRequireModule(modulePath, req);
-                handlers = mod;
-            }
-            else {
-                const mod = await import(modulePath);
-                handlers = (mod && mod.default ? mod.default : mod);
+            {
+                // Always use dynamic import to support ESM route modules seamlessly.
+                // If the file is TypeScript, we still try to register ts-node above so import can transpile on the fly when supported.
+                const mod = await import(pathToFileURL(modulePath).href);
+                handlers = (mod && (mod.default ?? mod));
             }
             Object.keys(handlers || {}).forEach((method) => {
                 const normalized = method.toUpperCase();

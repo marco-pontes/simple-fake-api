@@ -1,8 +1,9 @@
 import type { Express } from 'express';
 import { glob } from 'glob';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { createRequire } from 'module';
-import { tryRegisterTsNode, syncRequireModule } from './utils/compatibility.js';
+import { tryRegisterTsNode } from './utils/compatibility.js';
 import type { RouteDefinition, RouteHandlers } from './utils/types.js';
 
 /**
@@ -65,13 +66,11 @@ export const mapRoutes = async (
     const modulePath = path.join(apiPath, file);
     try {
       let handlers: RouteHandlers;
-      if (isTs && req) {
-        // Use CommonJS require through ts-node hook so .ts files are transpiled on the fly
-        const mod = syncRequireModule(modulePath, req as any);
-        handlers = mod as RouteHandlers;
-      } else {
-        const mod = await import(modulePath);
-        handlers = (mod && (mod as any).default ? (mod as any).default : (mod as any)) as RouteHandlers;
+      {
+        // Always use dynamic import to support ESM route modules seamlessly.
+        // If the file is TypeScript, we still try to register ts-node above so import can transpile on the fly when supported.
+        const mod: any = await import(pathToFileURL(modulePath).href);
+        handlers = (mod && (mod.default ?? mod)) as RouteHandlers;
       }
 
       Object.keys(handlers || {}).forEach((method) => {
