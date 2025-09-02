@@ -338,11 +338,11 @@ Notes
 
 Important changes:
 - HTTP configuration should be provided at build time by your bundler (Vite/Webpack), not from package.json.
-- The client reads a build-time injected global constant named __SIMPLE_FAKE_API_HTTP__.
+- The client reads configuration injected by the bundler via the setupSimpleFakeApiHttpRoutes plugin (no global named SIMPLE_FAKE_API_HTTP to reference directly).
 - If no config is injected (e.g., local development in Node), the client falls back to http://localhost:<port> using the port from your simple-fake-api.config.js.
 - For browser bundles, you can inject whichever environments you need (e.g., dev/prod). The client will pick based on NODE_ENV (dev by default).
 
-Vite example (define from process.env):
+Vite example (environment string):
 
 ```ts
 // vite.config.ts
@@ -350,22 +350,19 @@ import { defineConfig } from 'vite';
 import { setupSimpleFakeApiHttpRoutes } from '@marco-pontes/simple-fake-api/bundler';
 
 export default defineConfig(() => {
-  const http = {
-    endpoints: {
-      'api-server': { dev: { baseUrl: process.env.SIMPLE_FAKE_API_API_SERVER_BASE_URL || 'http://localhost:5000' } },
-    },
-  };
+  const environment = process.env.NODE_ENV || 'development';
   return {
     define: {
-      ...setupSimpleFakeApiHttpRoutes(http),
+      ...setupSimpleFakeApiHttpRoutes(environment),
     },
   };
 });
 ```
 
-Build your config object using whatever env variables your project uses. Example:
-- SIMPLE_FAKE_API_API_SERVER_BASE_URL=https://api.example.com
-  - Endpoint name suggestion: derive from your chosen naming, e.g., API_SERVER -> "api-server". The library does not parse envs anymore; you fully control the mapping.
+How it works:
+- The plugin loads simple-fake-api.config.js from your project root and picks the correct baseUrl per endpoint for the provided environment string.
+- In development, baseUrl is computed as http://localhost:<port from simple-fake-api.config.js> (no baseUrl needed in the config for dev).
+- For other environments (e.g., production, staging, or any custom name), add a baseUrl under http.endpoints.<endpoint>.<envName> in your simple-fake-api.config.js.
 
 Webpack example:
 
@@ -375,15 +372,11 @@ const webpack = require('webpack');
 const { setupSimpleFakeApiHttpRoutes } = require('@marco-pontes/simple-fake-api/bundler');
 
 module.exports = (env) => {
-  const http = {
-    endpoints: {
-      'api-server': { dev: { baseUrl: process.env.SIMPLE_FAKE_API_API_SERVER_BASE_URL || 'http://localhost:5000' } },
-    },
-  };
+  const environment = process.env.NODE_ENV || 'production';
   return {
     // ...
     plugins: [
-      new webpack.DefinePlugin(setupSimpleFakeApiHttpRoutes(http)), 
+      new webpack.DefinePlugin(setupSimpleFakeApiHttpRoutes(environment)),
     ],
   };
 };
@@ -402,7 +395,7 @@ const created = await api.post('/users', { name: 'John' });
 ```
 
 Node/local development fallback:
-- If you don’t inject any config (no __SIMPLE_FAKE_API_HTTP__), the client will read your simple-fake-api.config.js port and use http://localhost:<port> for any endpoint name you pass to create().
+- If you don’t inject any config via the bundler, the client will read your simple-fake-api.config.js port and use http://localhost:<port> for any endpoint name you pass to create().
 - This lets you run your front-end dev server against the local Simple Fake API without extra setup.
 
 Notes:
