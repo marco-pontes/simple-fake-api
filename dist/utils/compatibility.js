@@ -20,6 +20,20 @@ export function resolveBaseDir() {
     }
     catch { }
     try {
+        // Walk up from cwd to find nearest directory containing package.json
+        let dir = process.cwd();
+        const root = path.parse(dir).root;
+        while (true) {
+            try {
+                if (fs.existsSync(path.join(dir, 'package.json')))
+                    return dir;
+            }
+            catch { }
+            if (dir === root)
+                break;
+            dir = path.dirname(dir);
+        }
+        // Fallback to cwd if no package.json found
         return process.cwd();
     }
     catch {

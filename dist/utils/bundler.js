@@ -16,10 +16,10 @@ function loadUserConfigFile() {
         path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.cts'),
     ];
     const msg = [
-        'simple-fake-api/bundler: could not load simple-fake-api.config.js.',
+        'simple-fake-api/bundler: could not load simple-fake-api config file.',
         `Checked paths: ${tried.join(', ') || '(none found)'}.`,
-        'Ensure the file exists at your project root and uses CommonJS export (module.exports = { ... }).',
-        'If you must use ESM (.mjs), convert it to CommonJS or re-export as module.exports for the bundler to load synchronously.',
+        'Ensure the file exists at your project root. Supported extensions: .js, .cjs, .mjs, .ts, .cts.',
+        'TypeScript configs are supported via bundled ts-node at runtime.',
     ].join(' ');
     throw new Error(msg);
 }
