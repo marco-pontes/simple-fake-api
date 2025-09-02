@@ -4,6 +4,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'module';
 
 export interface InjectedHttpConfig {
   endpoints: Record<string, { baseUrl: string; headers?: Record<string, string> }>;
@@ -32,14 +33,14 @@ function loadUserConfigFile(): any {
   const tried: string[] = [];
 
   // Try CommonJS via require for .js/.cjs
+  const req = createRequire(import.meta.url);
   for (const p of candidates) {
     tried.push(p);
     if (!fs.existsSync(p)) continue;
     const ext = path.extname(p);
     if (ext === '.js' || ext === '.cjs') {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const mod = require(p);
+        const mod = req(p);
         return (mod && (mod.default ?? mod));
       } catch (e: any) {
         // If the file is ESM-only, require will throw ERR_REQUIRE_ESM; we will handle below

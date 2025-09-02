@@ -3,6 +3,7 @@
 // Use the helper below in Vite or Webpack to create that definition from a config object you construct in your bundler config.
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'module';
 function loadUserConfigFile() {
     // Resolve base directory: prefer INIT_CWD (original install/run cwd), then process.cwd()
     const initCwd = process.env.INIT_CWD;
@@ -14,6 +15,7 @@ function loadUserConfigFile() {
     ];
     const tried = [];
     // Try CommonJS via require for .js/.cjs
+    const req = createRequire(import.meta.url);
     for (const p of candidates) {
         tried.push(p);
         if (!fs.existsSync(p))
@@ -21,8 +23,7 @@ function loadUserConfigFile() {
         const ext = path.extname(p);
         if (ext === '.js' || ext === '.cjs') {
             try {
-                // eslint-disable-next-line @typescript-eslint/no-var-requires
-                const mod = require(p);
+                const mod = req(p);
                 return (mod && (mod.default ?? mod));
             }
             catch (e) {
