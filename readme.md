@@ -354,20 +354,22 @@ Important changes:
 - If no config is injected (e.g., local development in Node), the client falls back to http://localhost:<port> using the port from your simple-fake-api.config.js.
 - For browser bundles, you can inject whichever environments you need (e.g., dev/prod). The client will pick based on NODE_ENV (dev by default).
 
-Vite example (environment string):
+Vite example (synchronous config to avoid async define issues):
 
 ```ts
 // vite.config.ts
 import { defineConfig } from 'vite';
 import { setupSimpleFakeApiHttpRoutes } from '@marco-pontes/simple-fake-api/bundler';
 
-export default defineConfig(() => {
-  const environment = process.env.NODE_ENV || 'development';
-  return {
-    define: {
-      ...setupSimpleFakeApiHttpRoutes(environment),
-    },
-  };
+let environment = process.env.NODE_ENV || 'development';
+
+// Use the setupSimpleFakeApiHttpRoutes directly and synchronously so env vars are set before Vite proceeds
+const apiConfig = setupSimpleFakeApiHttpRoutes(environment);
+
+export default defineConfig({
+  define: {
+    ...apiConfig,
+  },
 });
 ```
 
@@ -376,7 +378,7 @@ How it works:
 - In development, baseUrl is computed as http://localhost:<port from simple-fake-api.config.js> (no baseUrl needed in the config for dev).
 - For other environments (e.g., production, staging, or any custom name), add a baseUrl under http.endpoints.<endpoint>.<envName> in your simple-fake-api.config.js.
 
-Webpack example:
+Webpack example (DefinePlugin already takes a plain object synchronously):
 
 ```js
 // webpack.config.js
@@ -385,14 +387,18 @@ const { setupSimpleFakeApiHttpRoutes } = require('@marco-pontes/simple-fake-api/
 
 module.exports = (env) => {
   const environment = process.env.NODE_ENV || 'production';
+  // Call helper synchronously before returning config
+  const apiConfig = setupSimpleFakeApiHttpRoutes(environment);
   return {
     // ...
     plugins: [
-      new webpack.DefinePlugin(setupSimpleFakeApiHttpRoutes(environment)),
+      new webpack.DefinePlugin(apiConfig),
     ],
   };
 };
 ```
+
+Notes on async: In Vite, returning a function can encourage async patterns which may evaluate define later; by computing the object first as shown above, you avoid any timing issues. In Webpack, DefinePlugin expects a plain object and is evaluated during compilation synchronously, so using the helper as shown is safe.
 
 Using the client in your app:
 

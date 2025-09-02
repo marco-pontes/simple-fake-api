@@ -17,9 +17,9 @@ var bundler_1 = require("@marco-pontes/simple-fake-api/bundler");
 // It injects __SIMPLE_FAKE_API_HTTP__ from a config object you build here (optionally using env vars).
 // Example env used here:
 // - SIMPLE_FAKE_API_API_SERVER_BASE_URL=https://api.example.com
-exports.default = (0, vite_1.defineConfig)(function () {
-    var environment = process.env.NODE_ENV || 'development';
-    return {
-        define: __assign({}, (0, bundler_1.setupSimpleFakeApiHttpRoutes)(environment)),
-    };
+var environment = process.env.NODE_ENV || 'development';
+// Use the setupSimpleFakeApiHttpRoutes directly and synchronously so env vars are set before Vite proceeds
+var apiConfig = (0, bundler_1.setupSimpleFakeApiHttpRoutes)(environment);
+exports.default = (0, vite_1.defineConfig)({
+    define: __assign({}, apiConfig),
 });
