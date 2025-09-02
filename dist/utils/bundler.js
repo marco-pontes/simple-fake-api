@@ -32,6 +32,7 @@ function loadUserConfigFile() {
                 }
                 catch { }
                 const mod = req(p);
+                console.log(`simple-fake-api/bundler: loaded config file: ${p}`);
                 return (mod && (mod.default ?? mod));
             }
             catch (e) {
@@ -41,6 +42,7 @@ function loadUserConfigFile() {
         if (ext === '.js' || ext === '.cjs') {
             try {
                 const mod = req(p);
+                console.log(`simple-fake-api/bundler: loaded config file: ${p}`);
                 return (mod && (mod.default ?? mod));
             }
             catch (e) {
@@ -104,6 +106,21 @@ export function setupSimpleFakeApiHttpRoutes(environment) {
         wildcardChar: cfg.wildcardChar,
         routeFileExtension: cfg.routeFileExtension || 'js',
     };
+    // Helpful log to show which config file and env were used
+    try {
+        const initCwd = process.env.INIT_CWD;
+        const baseDir = initCwd && fs.existsSync(path.join(initCwd, 'package.json')) ? initCwd : process.cwd();
+        const possible = ['simple-fake-api.config.js', 'simple-fake-api.config.cjs', 'simple-fake-api.config.mjs', 'simple-fake-api.config.ts', 'simple-fake-api.config.cts']
+            .map(f => path.join(baseDir, f));
+        const picked = possible.find(p => fs.existsSync(p));
+        if (picked) {
+            console.log(`simple-fake-api/bundler: using ${environment} environment with config file: ${picked}`);
+        }
+        else {
+            console.log(`simple-fake-api/bundler: using ${environment} environment (no config file found)`);
+        }
+    }
+    catch { }
     return {
         __SIMPLE_FAKE_API_HTTP__: JSON.stringify(http),
         __SIMPLE_FAKE_API_CONFIG__: JSON.stringify(serverConfig),
