@@ -59,7 +59,7 @@ try {
 
   // Resolve the path of this installed package to find the template file
   const pkgRoot = __dirname; // this file sits at package root after install
-  const templatePath = path.join(pkgRoot, 'examples', 'simple-fake-api.config.js');
+  const templatePath = path.join(pkgRoot, 'examples', isModule ? 'simple-fake-api.config.js' : 'simple-fake-api.config.cjs');
 
   if (!fs.existsSync(templatePath)) {
     // Fallback: embed minimal template here, with correct syntax and routeFileExtension option

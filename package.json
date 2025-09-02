@@ -63,7 +63,9 @@
     "readme.md",
     "LICENSE",
     "package.json",
+    "examples/simple-fake-api.config.cjs",
     "examples/simple-fake-api.config.js",
+    "examples/simple-fake-api.config.ts",
     "create-config.js"
   ],
   "types": "dist/index.d.ts",

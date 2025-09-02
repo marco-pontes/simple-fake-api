@@ -26,17 +26,10 @@ async function createConfigFile() {
     const __filename = url.fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const pkgRoot = path.resolve(__dirname, '..');
-    const templatePath = path.join(pkgRoot, 'examples', 'simple-fake-api.config.js');
+    const templatePath = path.join(pkgRoot, 'examples', isModule ? 'simple-fake-api.config.js' : 'simple-fake-api.config.cjs');
 
     if (fs.existsSync(templatePath)) {
-      let content = fs.readFileSync(templatePath, 'utf8');
-      // ensure routeFileExtension key exists
-      if (!/routeFileExtension\s*:/.test(content)) {
-        content = content.replace("wildcardChar: '_',", "wildcardChar: '_',\n  routeFileExtension: 'ts',");
-      }
-      if (isModule) {
-        content = content.replace('module.exports = ', 'export default ');
-      }
+      const content = fs.readFileSync(templatePath, 'utf8');
       fs.writeFileSync(targetPath, content, 'utf8');
       console.log(`Created ${fileName}`);
       return;
