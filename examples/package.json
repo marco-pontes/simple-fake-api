@@ -14,11 +14,5 @@
     "@types/node": "^22.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
-  },
-  "simple-fake-api-config": {
-    "port": 5000,
-    "apiDir": "api",
-    "collectionsDir": "collections",
-    "wildcardChar": "_"
   }
 }

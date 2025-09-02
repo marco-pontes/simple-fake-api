@@ -28,15 +28,16 @@ A small, fast file‑based fake API server for Node.js. Define endpoints by crea
 
 ## Quickstart (TL;DR)
 
-1. Add config to your package.json
+1. Create a simple-fake-api.config.js file at your project root
 
-```jsonc
-"simple-fake-api-config": {
-  "port": 5000,
-  "apiDir": "api",
-  "collectionsDir": "collections",
-  "wildcardChar": "_"
-}
+```js
+// simple-fake-api.config.js
+module.exports = {
+  port: 5000,
+  apiDir: 'api',
+  collectionsDir: 'collections',
+  wildcardChar: '_',
+};
 ```
 
 2. Create your first endpoint file: api/ping.ts
@@ -141,7 +142,7 @@ Configuration options and defaults:
 
 Notes:
 
-- You can override any of the above in your package.json under `"simple-fake-api-config"`.
+- Manage these settings exclusively via simple-fake-api.config.js.
 - Example: with `wildcardChar` "_", a file `api/users/_id.ts` maps to `GET /users/:id`. 
 
 ## URL mapping examples (5)
@@ -306,7 +307,7 @@ my-app/
 └─ src/ (your app code if needed)
 ```
 
-Example package.json (consumer project)
+Example minimal package scripts (consumer project)
 
 ```jsonc
 {
@@ -315,17 +316,11 @@ Example package.json (consumer project)
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "api": "node ./node_modules/simple-fake-api/dist/index.js",
-  },
-  "simple-fake-api-config": {
-    "port": 5000,
-    "apiDir": "api",
-    "collectionsDir": "collections",
-    "wildcardChar": "*",
+    "api": "simple-fake-api"
   },
   "devDependencies": {
-    "typescript": "^5.6.0",
-  },
+    "typescript": "^5.6.0"
+  }
 }
 ```
 
@@ -344,7 +339,7 @@ Notes
 Important changes:
 - HTTP configuration should be provided at build time by your bundler (Vite/Webpack), not from package.json.
 - The client reads a build-time injected global constant named __SIMPLE_FAKE_API_HTTP__.
-- If no config is injected (e.g., local development in Node), the client falls back to http://localhost:<port> using the port from simple-fake-api-config.port in your package.json.
+- If no config is injected (e.g., local development in Node), the client falls back to http://localhost:<port> using the port from your simple-fake-api.config.js.
 - For browser bundles, you can inject whichever environments you need (e.g., dev/prod). The client will pick based on NODE_ENV (dev by default).
 
 Vite example (define from process.env):
@@ -407,11 +402,11 @@ const created = await api.post('/users', { name: 'John' });
 ```
 
 Node/local development fallback:
-- If you don’t inject any config (no __SIMPLE_FAKE_API_HTTP__), the client will read your package.json’s simple-fake-api-config.port and use http://localhost:<port> for any endpoint name you pass to create().
+- If you don’t inject any config (no __SIMPLE_FAKE_API_HTTP__), the client will read your simple-fake-api.config.js port and use http://localhost:<port> for any endpoint name you pass to create().
 - This lets you run your front-end dev server against the local Simple Fake API without extra setup.
 
 Notes:
-- The library no longer reads the legacy http section from package.json. Provide HTTP client configuration via bundler injection; for local Node development without injection, the client falls back to http://localhost:<port> using simple-fake-api-config.port.
+- The library no longer reads any http configuration from package.json. Provide HTTP client configuration via bundler injection; for local Node development without injection, the client falls back to http://localhost:<port> using the port in simple-fake-api.config.js.
 - For typing HTTP handlers in your Simple Fake API project, import types from the http subpath: import type { Request, Response } from '@marco-pontes/simple-fake-api/http'
 
 Embedding the server in another Node process (optional):
