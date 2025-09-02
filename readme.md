@@ -318,6 +318,9 @@ Example minimal package scripts (consumer project)
     "build": "tsc",
     "api": "simple-fake-api"
   },
+  "dependencies": {
+    "@marco-pontes/simple-fake-api": "latest"
+  },
   "devDependencies": {
     "typescript": "^5.6.0"
   }
