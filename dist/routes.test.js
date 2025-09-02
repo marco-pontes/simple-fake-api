@@ -39,14 +39,14 @@ describe('routes', () => {
     });
     it('mapRoutes separates literal and param routes, handles index, and loads handlers', async () => {
         // create files on disk to be imported
-        const usersList = path.join(apiPath, 'users', 'list', 'index.ts');
+        const usersList = path.join(apiPath, 'users', 'list', 'index.js');
         createTempModule(usersList, { GET: (_req, res) => res.send('ok') });
-        const usersId = path.join(apiPath, 'users', '_id.ts');
+        const usersId = path.join(apiPath, 'users', '_id.js');
         createTempModule(usersId, { GET: (_req, res) => res.send('id') });
-        const v1Users = path.join(apiPath, 'v1', 'users.ts');
+        const v1Users = path.join(apiPath, 'v1', 'users.js');
         createTempModule(v1Users, { POST: (_req, res) => res.send('post') });
         // mock glob to return relative paths from apiPath
-        glob.mockResolvedValue(['users/list/index.ts', 'users/_id.ts', 'v1/users.ts']);
+        glob.mockResolvedValue(['users/list/index.js', 'users/_id.js', 'v1/users.js']);
         const { literals, params } = await mapRoutes(apiDir, '_');
         // literals should include users/list (GET) and v1/users (POST)
         expect(literals.map((r) => ({ route: r.route, method: r.method }))).toEqual(expect.arrayContaining([
@@ -63,9 +63,9 @@ describe('routes', () => {
     it('mapRoutes logs error when a module fails to import and continues', async () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
         // one good file, one bad file
-        const good = path.join(apiPath, 'ok.ts');
+        const good = path.join(apiPath, 'ok.js');
         createTempModule(good, { GET: () => { } });
-        glob.mockResolvedValue(['ok.ts', 'bad.ts']);
+        glob.mockResolvedValue(['ok.js', 'bad.js']);
         const { literals, params } = await mapRoutes(apiDir, '_');
         expect(consoleSpy).toHaveBeenCalled();
         // only ok.ts yields a route

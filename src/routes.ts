@@ -19,14 +19,14 @@ export const mapRoutes = async (
   const currentDir = process.cwd();
   const apiPath = path.join(currentDir, apiDir);
 
-  const files = await glob('**/*.{js,ts}', { cwd: apiPath, ignore: 'collections/*' });
+  const files = await glob('**/*.js', { cwd: apiPath, ignore: 'collections/*' });
 
   for (const file of files) {
-    let route = '/' + file.replace(/\.(js|ts)$/, '');
+    let route = '/' + file.replace(/\.js$/, '');
     const hasParam = route.includes(wildcardChar);
     route = route.replace(new RegExp(wildcardChar + '([^/]+)', 'g'), ':$1');
 
-    if (file.endsWith('/index.js') || file.endsWith('/index.ts')) {
+    if (file.endsWith('/index.js')) {
       route = route.replace('/index', '');
     }
 

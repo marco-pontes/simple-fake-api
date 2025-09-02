@@ -3,22 +3,23 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "Bundler",
-    "outDir": "dist",
-    "rootDir": "src",
+    "outDir": ".",
+    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
+    "declaration": false,
     "sourceMap": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "noEmit": false
   },
   "include": [
+    "api/**/*",
     "src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
     "**/*.spec.ts",
     "**/*.test.ts"
   ]
