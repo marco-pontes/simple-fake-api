@@ -11,6 +11,14 @@ A small, fast file‑based fake API server for Node.js. Define endpoints by crea
 
 ## Installation
 
+- Note for pnpm users (automatic config generation):
+  - pnpm may skip postinstall scripts by default for security. If the simple-fake-api.config.js file was not created automatically after installation, approve the build for this package:
+    - Run: pnpm approve-builds
+    - Select @marco-pontes/simple-fake-api in the list to allow its postinstall script.
+  - Alternatively, you can generate the default configuration via the CLI at any time:
+    - npx @marco-pontes/simple-fake-api init
+    - or if installed locally: npm run simple-fake-api init (or just simple-fake-api init if available in PATH)
+
 - Prerequisites: Node.js >= 18 (tested with Node 22.18.0)
 - Install:
 
