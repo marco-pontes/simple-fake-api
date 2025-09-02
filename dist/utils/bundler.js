@@ -3,9 +3,9 @@
 // Use the helper below in Vite or Webpack to create that definition from a config object you construct in your bundler config.
 import fs from 'fs';
 import path from 'path';
-import { loadFastApiConfigSync } from './fake-api-config-file.js';
+import { loadSimpleFakeApiConfigSync } from './fake-api-config-file.js';
 function loadUserConfigFile() {
-    const cfg = loadFastApiConfigSync();
+    const cfg = loadSimpleFakeApiConfigSync();
     if (cfg)
         return cfg;
     const tried = [

@@ -17,7 +17,7 @@ export function getConfigCandidatePaths(baseDir?: string): string[] {
   ];
 }
 
-export function loadFastApiConfigSync(): Partial<FakeApiConfig> | undefined {
+export function loadSimpleFakeApiConfigSync(): Partial<FakeApiConfig> | undefined {
   try {
     const req = createRequire(import.meta.url);
     const candidates = getConfigCandidatePaths();

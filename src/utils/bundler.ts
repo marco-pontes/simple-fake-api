@@ -5,24 +5,12 @@
 import fs from 'fs';
 import path from 'path';
 import type { SimpleFakeApiConfig } from './types.js';
-import { loadFastApiConfigSync } from './fake-api-config-file.js';
+import { loadSimpleFakeApiConfigSync } from './fake-api-config-file.js';
 
-export interface InjectedHttpConfig {
-  endpoints: Record<string, { baseUrl: string; headers?: Record<string, string> }>;
-}
-
-interface FullConfigFileShape {
-  port: number;
-  apiDir: string;
-  collectionsDir: string;
-  wildcardChar: string;
-  http?: {
-    endpoints: Record<string, Record<string, { baseUrl: string; headers?: Record<string, string> }>>;
-  };
-}
+import type { InjectedHttpConfig, FullConfigFileShape } from './types.js';
 
 function loadUserConfigFile(): any {
-  const cfg = loadFastApiConfigSync();
+  const cfg = loadSimpleFakeApiConfigSync();
   if (cfg) return cfg;
   const tried = [
     path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD! : process.cwd(), 'simple-fake-api.config.js'),

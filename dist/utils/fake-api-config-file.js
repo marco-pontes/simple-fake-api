@@ -12,7 +12,7 @@ export function getConfigCandidatePaths(baseDir) {
         path.join(base, 'simple-fake-api.config.cts'),
     ];
 }
-export function loadFastApiConfigSync() {
+export function loadSimpleFakeApiConfigSync() {
     try {
         const req = createRequire(import.meta.url);
         const candidates = getConfigCandidatePaths();

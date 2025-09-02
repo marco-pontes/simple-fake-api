@@ -71,3 +71,18 @@ export interface Client {
   baseUrl: string;
   headers: Record<string, string>;
 }
+
+// Bundler-related types
+export interface InjectedHttpConfig {
+  endpoints: Record<string, { baseUrl: string; headers?: Record<string, string> }>;
+}
+
+export interface FullConfigFileShape {
+  port: number;
+  apiDir: string;
+  collectionsDir: string;
+  wildcardChar: string;
+  http?: {
+    endpoints: Record<string, Record<string, { baseUrl: string; headers?: Record<string, string> }>>;
+  };
+}
