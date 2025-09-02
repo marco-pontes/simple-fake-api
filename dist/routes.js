@@ -1,6 +1,7 @@
 import { glob } from 'glob';
 import path from 'path';
 import { createRequire } from 'module';
+import { tryRegisterTsNode, syncRequireModule } from './utils/compatibility.js';
 /**
  * Mapeia arquivos JavaScript/TypeScript para definições de rota, separando-os
  * em rotas literais e rotas com parâmetros para garantir a ordem correta.
@@ -43,20 +44,7 @@ export const mapRoutes = async (apiDir, wildcardChar, routeFileExtension = 'js')
     if (isTs) {
         try {
             req = createRequire(import.meta.url);
-            try {
-                // Prefer transpile-only for speed; fall back to full register
-                req.resolve('ts-node/register/transpile-only');
-                req('ts-node/register/transpile-only');
-            }
-            catch {
-                try {
-                    req.resolve('ts-node/register');
-                    req('ts-node/register');
-                }
-                catch {
-                    console.warn('simple-fake-api: ts-node not found. Attempting native import of .ts files may fail. Install devDependency: ts-node');
-                }
-            }
+            tryRegisterTsNode(req);
         }
         catch { }
     }
@@ -73,8 +61,8 @@ export const mapRoutes = async (apiDir, wildcardChar, routeFileExtension = 'js')
             let handlers;
             if (isTs && req) {
                 // Use CommonJS require through ts-node hook so .ts files are transpiled on the fly
-                const mod = req(modulePath);
-                handlers = (mod && (mod.default ?? mod));
+                const mod = syncRequireModule(modulePath, req);
+                handlers = mod;
             }
             else {
                 const mod = await import(modulePath);

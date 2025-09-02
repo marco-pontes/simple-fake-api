@@ -1,7 +1,10 @@
 // Lightweight HTTP client factory with environment-aware base URLs
 // Usage in consumer: import { http } from '@marco-pontes/simple-fake-api/http'
 // or: import { httpClient } from '@marco-pontes/simple-fake-api'
+import { isNodeRuntime, resolveBaseDir } from './utils/compatibility.js';
 import { createRequire } from 'module';
+import { getConfigCandidatePaths } from './utils/fake-api-config-file.js';
+import { syncRequireModule } from './utils/compatibility.js';
 /**
  * Resolve current environment name for selecting endpoint configuration.
  * Priority: config.resolveEnv() -> NODE_ENV (prod/staging/test) -> dev
@@ -111,65 +114,16 @@ export function create(endpointName, options) {
     // 2) Node/dev: fallback to localhost:<port> from simple-fake-api.config.* (synchronous load in Node only)
     const nodePort = (() => {
         try {
-            // Avoid bundlers: only attempt in real Node
-            // @ts-ignore
-            const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
-            if (!isNode)
+            if (!isNodeRuntime())
                 return undefined;
-            // Lazy, inline sync load of config file to obtain the port (avoid hard dependency for browser bundles)
             const req = createRequire(import.meta.url);
-            const fs = req('fs');
-            const path = req('path');
-            const initCwd = process.env.INIT_CWD;
-            const baseDir = initCwd && fs.existsSync(path.join(initCwd, 'package.json')) ? initCwd : process.cwd();
-            const candidates = [
-                path.join(baseDir, 'simple-fake-api.config.js'),
-                path.join(baseDir, 'simple-fake-api.config.cjs'),
-                path.join(baseDir, 'simple-fake-api.config.mjs'),
-                path.join(baseDir, 'simple-fake-api.config.ts'),
-                path.join(baseDir, 'simple-fake-api.config.cts'),
-            ];
+            const baseDir = resolveBaseDir();
+            const candidates = getConfigCandidatePaths(baseDir);
             for (const p of candidates) {
-                if (!fs.existsSync(p))
-                    continue;
-                const ext = path.extname(p);
                 try {
-                    if (ext === '.ts' || ext === '.cts') {
-                        try {
-                            // Prefer programmatic ts-node registration for robust CJS require of TS files
-                            try {
-                                const tsnode = req('ts-node');
-                                if (tsnode && typeof tsnode.register === 'function') {
-                                    tsnode.register({ transpileOnly: true, compilerOptions: { module: 'commonjs', esModuleInterop: true } });
-                                }
-                                else {
-                                    try {
-                                        req.resolve('ts-node/register/transpile-only');
-                                        req('ts-node/register/transpile-only');
-                                    }
-                                    catch {
-                                        try {
-                                            req.resolve('ts-node/register');
-                                            req('ts-node/register');
-                                        }
-                                        catch { }
-                                    }
-                                }
-                            }
-                            catch { }
-                        }
-                        catch { }
-                        const mod = req(p);
-                        const cfg = mod && (mod.default ?? mod);
-                        if (cfg?.port)
-                            return cfg.port;
-                    }
-                    else {
-                        const mod = req(p);
-                        const cfg = mod && (mod.default ?? mod);
-                        if (cfg?.port)
-                            return cfg.port;
-                    }
+                    const cfg = syncRequireModule(p, req);
+                    if (cfg?.port)
+                        return cfg.port;
                 }
                 catch {
                     continue;

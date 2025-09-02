@@ -3,78 +3,18 @@
 // Use the helper below in Vite or Webpack to create that definition from a config object you construct in your bundler config.
 import fs from 'fs';
 import path from 'path';
-import { createRequire } from 'module';
+import { loadFastApiConfigSync } from './fake-api-config-file.js';
 function loadUserConfigFile() {
-    // Resolve base directory: prefer INIT_CWD (original install/run cwd), then process.cwd()
-    const initCwd = process.env.INIT_CWD;
-    const baseDir = initCwd && fs.existsSync(path.join(initCwd, 'package.json')) ? initCwd : process.cwd();
-    const candidates = [
-        path.join(baseDir, 'simple-fake-api.config.js'),
-        path.join(baseDir, 'simple-fake-api.config.cjs'),
-        path.join(baseDir, 'simple-fake-api.config.mjs'),
-        path.join(baseDir, 'simple-fake-api.config.ts'),
-        path.join(baseDir, 'simple-fake-api.config.cts'),
+    const cfg = loadFastApiConfigSync();
+    if (cfg)
+        return cfg;
+    const tried = [
+        path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.js'),
+        path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.cjs'),
+        path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.mjs'),
+        path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.ts'),
+        path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD : process.cwd(), 'simple-fake-api.config.cts'),
     ];
-    const tried = [];
-    // Try CommonJS via require for .js/.cjs and transpile .ts/.cts on the fly if ts-node/register is available
-    const req = createRequire(import.meta.url);
-    for (const p of candidates) {
-        tried.push(p);
-        if (!fs.existsSync(p))
-            continue;
-        const ext = path.extname(p);
-        if (ext === '.ts' || ext === '.cts') {
-            try {
-                // Prefer programmatic ts-node registration for robust CJS require of TS files
-                try {
-                    const tsnode = req('ts-node');
-                    if (tsnode && typeof tsnode.register === 'function') {
-                        tsnode.register({ transpileOnly: true, compilerOptions: { module: 'commonjs', esModuleInterop: true } });
-                    }
-                    else {
-                        // Fallback to legacy register modules
-                        try {
-                            req.resolve('ts-node/register/transpile-only');
-                            req('ts-node/register/transpile-only');
-                        }
-                        catch {
-                            try {
-                                req.resolve('ts-node/register');
-                                req('ts-node/register');
-                            }
-                            catch { }
-                        }
-                    }
-                }
-                catch { }
-                const mod = req(p);
-                console.log(`simple-fake-api/bundler: loaded config file: ${p}`);
-                return (mod && (mod.default ?? mod));
-            }
-            catch (e) {
-                // Fallthrough to helpful error below
-            }
-        }
-        if (ext === '.js' || ext === '.cjs') {
-            try {
-                const mod = req(p);
-                console.log(`simple-fake-api/bundler: loaded config file: ${p}`);
-                return (mod && (mod.default ?? mod));
-            }
-            catch (e) {
-                // If the file is ESM-only, require will throw ERR_REQUIRE_ESM; we will handle below
-                if (e && (e.code === 'ERR_REQUIRE_ESM' || /Cannot use import statement/.test(String(e.message)))) {
-                    // fall through to ESM note below
-                }
-                else {
-                    // Other errors: rethrow with context
-                    throw new Error(`simple-fake-api/bundler: failed to require ${p}: ${e?.message || e}`);
-                }
-            }
-        }
-    }
-    // We intentionally avoid async dynamic import here to keep bundler config synchronous.
-    // Suggest using CommonJS export when ESM is detected or use a TypeScript config with ts-node available.
     const msg = [
         'simple-fake-api/bundler: could not load simple-fake-api.config.js.',
         `Checked paths: ${tried.join(', ') || '(none found)'}.`,

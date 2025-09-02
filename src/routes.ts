@@ -2,6 +2,7 @@ import type { Express } from 'express';
 import { glob } from 'glob';
 import path from 'path';
 import { createRequire } from 'module';
+import { tryRegisterTsNode, syncRequireModule } from './utils/compatibility.js';
 import type { RouteDefinition, RouteHandlers } from './utils/types.js';
 
 /**
@@ -47,18 +48,7 @@ export const mapRoutes = async (
   if (isTs) {
     try {
       req = createRequire(import.meta.url);
-      try {
-        // Prefer transpile-only for speed; fall back to full register
-        (req as any).resolve('ts-node/register/transpile-only');
-        (req as any)('ts-node/register/transpile-only');
-      } catch {
-        try {
-          (req as any).resolve('ts-node/register');
-          (req as any)('ts-node/register');
-        } catch {
-          console.warn('simple-fake-api: ts-node not found. Attempting native import of .ts files may fail. Install devDependency: ts-node');
-        }
-      }
+      tryRegisterTsNode(req as any);
     } catch {}
   }
 
@@ -77,8 +67,8 @@ export const mapRoutes = async (
       let handlers: RouteHandlers;
       if (isTs && req) {
         // Use CommonJS require through ts-node hook so .ts files are transpiled on the fly
-        const mod = (req as any)(modulePath);
-        handlers = (mod && (mod.default ?? mod)) as RouteHandlers;
+        const mod = syncRequireModule(modulePath, req as any);
+        handlers = mod as RouteHandlers;
       } else {
         const mod = await import(modulePath);
         handlers = (mod && (mod as any).default ? (mod as any).default : (mod as any)) as RouteHandlers;
