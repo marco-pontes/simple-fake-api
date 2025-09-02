@@ -6,18 +6,20 @@ import fs from 'fs';
 import path from 'path';
 import type { SimpleFakeApiConfig } from './types.js';
 import { loadSimpleFakeApiConfigSync } from './fake-api-config-file.js';
+import { resolveBaseDir } from './compatibility.js';
 
 import type { InjectedHttpConfig, FullConfigFileShape } from './types.js';
 
 function loadUserConfigFile(): any {
   const cfg = loadSimpleFakeApiConfigSync();
   if (cfg) return cfg;
+  const base = (process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json'))) ? process.env.INIT_CWD! : resolveBaseDir();
   const tried = [
-    path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD! : process.cwd(), 'simple-fake-api.config.js'),
-    path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD! : process.cwd(), 'simple-fake-api.config.cjs'),
-    path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD! : process.cwd(), 'simple-fake-api.config.mjs'),
-    path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD! : process.cwd(), 'simple-fake-api.config.ts'),
-    path.join(process.env.INIT_CWD && fs.existsSync(path.join(process.env.INIT_CWD, 'package.json')) ? process.env.INIT_CWD! : process.cwd(), 'simple-fake-api.config.cts'),
+    path.join(base, 'simple-fake-api.config.js'),
+    path.join(base, 'simple-fake-api.config.cjs'),
+    path.join(base, 'simple-fake-api.config.mjs'),
+    path.join(base, 'simple-fake-api.config.ts'),
+    path.join(base, 'simple-fake-api.config.cts'),
   ];
   const msg = [
     'simple-fake-api/bundler: could not load simple-fake-api config file.',
