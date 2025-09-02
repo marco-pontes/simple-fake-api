@@ -40,7 +40,7 @@ function loadUserConfigFile() {
         'simple-fake-api/bundler: could not load simple-fake-api config file.',
         `Checked paths: ${tried.join(', ') || '(none found)'}.`,
         'Ensure the file exists at your project root. Supported extensions: .js, .cjs, .mjs, .ts, .cts.',
-        'TypeScript configs are supported via bundled ts-node at runtime.',
+        'TypeScript configs are supported via bundled ts-node, and if your project uses ESM ("type":"module"), the loader will attempt a synchronous transpile fallback using your installed "typescript" package.',
     ].join(' ');
     throw new Error(msg);
 }

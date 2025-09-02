@@ -52,7 +52,7 @@ export function loadSimpleFakeApiConfigSync(): Partial<FakeApiConfig> | undefine
         // - .cjs: always require
         // - .mjs: try require (works if transpiled to CJS), otherwise skip (no async import here)
         // - .cts: register ts-node, then require
-        // - .ts: register ts-node, then require (treated as ESM source, ts-node will transpile for require)
+        // - .ts: register ts-node, then require; if ERR_REQUIRE_ESM under ESM project, try TypeScript transpile fallback
         // - .js: require when projectType !== 'module'; if 'module', require may throw ERR_REQUIRE_ESM
         let cfg: any;
         if (ext === '.cjs') {
@@ -64,8 +64,38 @@ export function loadSimpleFakeApiConfigSync(): Partial<FakeApiConfig> | undefine
             if (DEBUG) { try { console.log(`simple-fake-api/bundler[debug]: require failed for .mjs (${p}): ${e?.code || ''} ${e?.message || e}`); } catch {} }
             continue;
           }
-        } else if (ext === '.cts' || ext === '.ts') {
+        } else if (ext === '.cts') {
           cfg = syncRequireModule(p, req);
+        } else if (ext === '.ts') {
+          try {
+            cfg = syncRequireModule(p, req);
+          } catch (e: any) {
+            if (DEBUG) { try { console.log(`simple-fake-api/bundler[debug]: primary load failed for .ts (${p}): ${e?.code || ''} ${e?.message || e}`); } catch {} }
+            // Fallback: attempt to transpile with consumer's TypeScript to CommonJS and require the temp file (ESM-friendly)
+            try {
+              const ts = (req as any)('typescript');
+              if (ts && typeof ts.transpileModule === 'function') {
+                const src = fs.readFileSync(p, 'utf8');
+                const out = ts.transpileModule(src, {
+                  compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true, target: ts.ScriptTarget.ES2019 },
+                  fileName: p,
+                });
+                const os = (req as any)('os') as typeof import('os');
+                const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sfa-cfg-'));
+                const tmpFile = path.join(tmpDir, path.basename(p).replace(/\.ts$/, '.cjs'));
+                fs.writeFileSync(tmpFile, out.outputText, 'utf8');
+                if (DEBUG) { try { console.log(`simple-fake-api/bundler[debug]: transpiled TS config to temp CJS: ${tmpFile}`); } catch {} }
+                const mod = (req as any)(tmpFile);
+                cfg = mod && (mod.default ?? mod);
+                // best-effort cleanup
+                try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+              } else {
+                if (DEBUG) { try { console.log('simple-fake-api/bundler[debug]: typescript not available for transpile fallback'); } catch {} }
+              }
+            } catch (e2: any) {
+              if (DEBUG) { try { console.log(`simple-fake-api/bundler[debug]: transpile fallback failed: ${e2?.code || ''} ${e2?.message || e2}`); } catch {} }
+            }
+          }
         } else if (ext === '.js') {
           try {
             cfg = syncRequireModule(p, req);
