@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import fs from 'fs';
 
 // Import subject
 import { create } from './http-client';
@@ -49,23 +48,13 @@ describe('http-client', () => {
     delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
   });
 
-  it('falls back to localhost:port from package.json when no injection and no injected server config', async () => {
-    // mock reading package.json for port via explicit path
-    const pkgPath = '/tmp/pkg.json';
-    vi.spyOn(fs, 'readFileSync').mockImplementation((p: any) => {
-      if (p === pkgPath) return JSON.stringify({ 'simple-fake-api-config': { port: 5050 } });
-      throw new Error('unexpected read');
-    });
 
-    const client = create('anything', undefined, pkgPath);
-    await client.get('/ping');
-    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:5050/ping', expect.objectContaining({ method: 'GET' }));
-  });
-
-  it('throws helpful error when neither injection nor port present', async () => {
-    const cwd = '/tmp/project2';
-    vi.spyOn(process, 'cwd').mockReturnValue(cwd as any);
-    vi.spyOn(fs, 'readFileSync').mockImplementationOnce(() => { throw new Error('no file'); });
+  it('throws helpful error when neither HTTP injection nor injected port present', async () => {
+    // Ensure no globals are set
+    // @ts-ignore
+    delete globalThis.__SIMPLE_FAKE_API_HTTP__;
+    // @ts-ignore
+    delete globalThis.__SIMPLE_FAKE_API_CONFIG__;
     expect(() => create('missing')).toThrow(/no configuration provided/i);
   });
 

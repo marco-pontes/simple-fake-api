@@ -10,13 +10,11 @@ import type {
   CreateOptions,
   Client,
 } from './utils/types.js';
-// New public API: create(endpointName, options?) which reads config from package.json
+// HTTP client reads build-time injected config; no legacy package.json support
 // Re-export the Client type for consumers importing from the http subpath
 export type { Client } from './utils/types.js';
 // Also re-export Express Request/Response types from the http subpath
 export type { Request, Response } from 'express';
-import fs from 'fs';
-import path from 'path';
 
 /**
  * Resolve current environment name for selecting endpoint configuration.
@@ -120,7 +118,7 @@ function resolveInjectedConfig(): any | undefined {
   }
 }
 
-export function create(endpointName: string, options?: CreateOptions, customPackageJsonPath?: string): Client {
+export function create(endpointName: string, options?: CreateOptions): Client {
   // 1) Prefer build-time injected config for browser/runtime without FS
   const injected = resolveInjectedConfig();
   if (injected && injected.endpoints) {
@@ -141,21 +139,6 @@ export function create(endpointName: string, options?: CreateOptions, customPack
     const factory = buildFactory({ endpoints: {} as any } as HttpClientConfig, `http://localhost:${injectedPort}`);
     return factory.create(endpointName, options);
   }
-  // 3) Last Node/dev fallback: read port from package.json simple-fake-api-config.port (legacy)
-  const pkgPort = (() => {
-    try {
-      const pkgPath = customPackageJsonPath || path.join(process.cwd(), 'package.json');
-      const raw = fs.readFileSync(pkgPath, 'utf8');
-      const pkg = JSON.parse(raw);
-      return pkg?.['simple-fake-api-config']?.port as number | undefined;
-    } catch {
-      return undefined;
-    }
-  })();
-  if (pkgPort) {
-    const factory = buildFactory({ endpoints: {} as any } as HttpClientConfig, `http://localhost:${pkgPort}`);
-    return factory.create(endpointName, options);
-  }
   // Last resort: error
-  throw new Error('simple-fake-api/http: no configuration provided. Provide build-time config via __SIMPLE_FAKE_API_HTTP__ or set simple-fake-api-config.port for localhost fallback');
+  throw new Error('simple-fake-api/http: no configuration provided. Provide build-time config via setupSimpleFakeApiHttpRoutes in your bundler or inject __SIMPLE_FAKE_API_HTTP__');
 }

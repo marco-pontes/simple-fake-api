@@ -1,8 +1,6 @@
 // Lightweight HTTP client factory with environment-aware base URLs
 // Usage in consumer: import { http } from '@marco-pontes/simple-fake-api/http'
 // or: import { httpClient } from '@marco-pontes/simple-fake-api'
-import fs from 'fs';
-import path from 'path';
 /**
  * Resolve current environment name for selecting endpoint configuration.
  * Priority: config.resolveEnv() -> NODE_ENV (prod/staging/test) -> dev
@@ -102,7 +100,7 @@ function resolveInjectedConfig() {
         return undefined;
     }
 }
-export function create(endpointName, options, customPackageJsonPath) {
+export function create(endpointName, options) {
     // 1) Prefer build-time injected config for browser/runtime without FS
     const injected = resolveInjectedConfig();
     if (injected && injected.endpoints) {
@@ -124,22 +122,6 @@ export function create(endpointName, options, customPackageJsonPath) {
         const factory = buildFactory({ endpoints: {} }, `http://localhost:${injectedPort}`);
         return factory.create(endpointName, options);
     }
-    // 3) Last Node/dev fallback: read port from package.json simple-fake-api-config.port (legacy)
-    const pkgPort = (() => {
-        try {
-            const pkgPath = customPackageJsonPath || path.join(process.cwd(), 'package.json');
-            const raw = fs.readFileSync(pkgPath, 'utf8');
-            const pkg = JSON.parse(raw);
-            return pkg?.['simple-fake-api-config']?.port;
-        }
-        catch {
-            return undefined;
-        }
-    })();
-    if (pkgPort) {
-        const factory = buildFactory({ endpoints: {} }, `http://localhost:${pkgPort}`);
-        return factory.create(endpointName, options);
-    }
     // Last resort: error
-    throw new Error('simple-fake-api/http: no configuration provided. Provide build-time config via __SIMPLE_FAKE_API_HTTP__ or set simple-fake-api-config.port for localhost fallback');
+    throw new Error('simple-fake-api/http: no configuration provided. Provide build-time config via setupSimpleFakeApiHttpRoutes in your bundler or inject __SIMPLE_FAKE_API_HTTP__');
 }
