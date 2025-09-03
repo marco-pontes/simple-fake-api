@@ -10,10 +10,8 @@ import type {
   CreateOptions,
   Client,
 } from './utils/types.js';
-import { isNodeRuntime, resolveBaseDir } from './utils/compatibility.js';
-import { createRequire } from 'module';
-import { getConfigCandidatePaths } from './utils/fake-api-config-file.js';
-import { syncRequireModule } from './utils/compatibility.js';
+import { isNodeRuntime } from './utils/compatibility.js';
+import { loadSimpleFakeApiConfigSync } from './utils/fake-api-config-file.js';
 // HTTP client reads build-time injected config; no legacy package.json support
 // Re-export the Client type for consumers importing from the http subpath
 export type { Client } from './utils/types.js';
@@ -133,16 +131,8 @@ export function create(endpointName: string, options?: CreateOptions): Client {
   const nodePort = (() => {
     try {
       if (!isNodeRuntime()) return undefined;
-      const req = createRequire(import.meta.url);
-      const baseDir = resolveBaseDir();
-      const candidates = getConfigCandidatePaths(baseDir);
-      for (const p of candidates) {
-        try {
-          const cfg: any = syncRequireModule(p, req);
-          if (cfg?.port) return cfg.port as number;
-        } catch { continue; }
-      }
-      return undefined;
+      const cfg: any = loadSimpleFakeApiConfigSync();
+      return cfg?.port as number | undefined;
     } catch {
       return undefined;
     }

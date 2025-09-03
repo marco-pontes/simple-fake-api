@@ -12,13 +12,22 @@ export function isNodeRuntime(): boolean {
   }
 }
 
-/** Resolve the base directory to locate consumer project files (INIT_CWD preferred). */
+/** Resolve the base directory to locate consumer project files (INIT_CWD preferred, otherwise walk up from cwd). */
 export function resolveBaseDir(): string {
   try {
     const initCwd = process.env.INIT_CWD;
     if (initCwd && fs.existsSync(path.join(initCwd, 'package.json'))) return initCwd;
   } catch {}
+  // Walk up from current working directory until we find a package.json
   try {
+    let dir = process.cwd();
+    // Defensive: limit to 50 levels to avoid infinite loops on weird FS
+    for (let i = 0; i < 50; i++) {
+      if (fs.existsSync(path.join(dir, 'package.json'))) return dir;
+      const parent = path.dirname(dir);
+      if (!parent || parent === dir) break;
+      dir = parent;
+    }
     return process.cwd();
   } catch {
     return '.';

@@ -1,10 +1,8 @@
 // Lightweight HTTP client factory with environment-aware base URLs
 // Usage in consumer: import { http } from '@marco-pontes/simple-fake-api/http'
 // or: import { httpClient } from '@marco-pontes/simple-fake-api'
-import { isNodeRuntime, resolveBaseDir } from './utils/compatibility.js';
-import { createRequire } from 'module';
-import { getConfigCandidatePaths } from './utils/fake-api-config-file.js';
-import { syncRequireModule } from './utils/compatibility.js';
+import { isNodeRuntime } from './utils/compatibility.js';
+import { loadSimpleFakeApiConfigSync } from './utils/fake-api-config-file.js';
 /**
  * Resolve current environment name for selecting endpoint configuration.
  * Priority: config.resolveEnv() -> NODE_ENV (prod/staging/test) -> dev
@@ -116,20 +114,8 @@ export function create(endpointName, options) {
         try {
             if (!isNodeRuntime())
                 return undefined;
-            const req = createRequire(import.meta.url);
-            const baseDir = resolveBaseDir();
-            const candidates = getConfigCandidatePaths(baseDir);
-            for (const p of candidates) {
-                try {
-                    const cfg = syncRequireModule(p, req);
-                    if (cfg?.port)
-                        return cfg.port;
-                }
-                catch {
-                    continue;
-                }
-            }
-            return undefined;
+            const cfg = loadSimpleFakeApiConfigSync();
+            return cfg?.port;
         }
         catch {
             return undefined;

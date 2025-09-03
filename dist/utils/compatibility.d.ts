@@ -1,6 +1,6 @@
 /** Determine if we are running in a real Node.js runtime (not a bundled browser env). */
 export declare function isNodeRuntime(): boolean;
-/** Resolve the base directory to locate consumer project files (INIT_CWD preferred). */
+/** Resolve the base directory to locate consumer project files (INIT_CWD preferred, otherwise walk up from cwd). */
 export declare function resolveBaseDir(): string;
 /**
  * Try to register ts-node so that requiring .ts/.cts files works synchronously.
