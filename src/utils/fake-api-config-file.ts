@@ -32,8 +32,11 @@ export function loadSimpleFakeApiConfigSync(): Partial<FakeApiConfig> | undefine
   try {
     const req = createRequire(import.meta.url);
     // Initialize jiti with our require context; prefer ESM default interop
+    // In ESM, __filename is not defined; use fileURLToPath(import.meta.url) as the filename seed
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const jiti = (req as any)('jiti')(__filename, { interopDefault: true, esmResolve: true, cache: false });
+    const { fileURLToPath } = (req as any)('url');
+    const thisFile = fileURLToPath(import.meta.url);
+    const jiti = (req as any)('jiti')(thisFile, { interopDefault: true, esmResolve: true, cache: false });
     const base = resolveBaseDir();
     const projectType = detectProjectModuleType(base);
     const candidates = getConfigCandidatePaths(base);
