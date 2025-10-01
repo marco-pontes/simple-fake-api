@@ -44,37 +44,31 @@ describe('generate', () => {
     vi.clearAllMocks();
   });
 
-  it('deve gerar dados com a quantidade especificada', async () => {
-    // Configura o mock para resolver com 3 itens.
+  it('deve gerar dados usando minItems e maxItems passados por parâmetro quando não existirem no schema', async () => {
     (JSONSchemaFaker.resolve as Mock).mockResolvedValue(mockGeneratedData);
 
-    // Chama a função com um número específico de itens.
-    const count = 3;
-    const result = await generate(mockSchema, count);
+    const min = 3;
+    const max = 3;
+    const result = await generate(mockSchema, min, max);
 
-    // Verifica se a função retorna um array com a quantidade correta de itens.
-    expect(result).toHaveLength(count);
+    expect(result).toHaveLength(mockGeneratedData.length);
 
-    // Verifica se `json-schema-faker` foi chamado com os parâmetros corretos.
     expect(JSONSchemaFaker.resolve).toHaveBeenCalledWith({
       ...mockSchema,
-      minItems: count,
-      maxItems: count,
+      minItems: min,
+      maxItems: max,
     });
   });
 
-  it('deve usar o valor padrão de 50 itens se a contagem não for especificada', async () => {
+  it('deve usar o valor padrão de quantidade (50 itens) quando minItems e maxItems não forem especificados no schema nem por parâmetro', async () => {
     const mockData50 = Array.from({ length: 50 }, (_, i) => ({ id: i + 1, name: `User ${i + 1}` }));
-    // Configura o mock para simular 50 itens.
     (JSONSchemaFaker.resolve as Mock).mockResolvedValue(mockData50);
 
-    // Chama a função sem especificar a contagem.
     const result = await generate(mockSchema);
 
-    // Verifica se o resultado tem o tamanho padrão.
     expect(result).toHaveLength(50);
 
-    // Verifica se `json-schema-faker` foi chamado com os valores padrão.
+    // Implementation uses 50 as the effective count when no bounds are provided.
     expect(JSONSchemaFaker.resolve).toHaveBeenCalledWith({
       ...mockSchema,
       minItems: 50,
@@ -94,7 +88,7 @@ describe('generate', () => {
     // Configura o mock para resolver com um único objeto.
     (JSONSchemaFaker.resolve as Mock).mockResolvedValue(mockGeneratedObject);
 
-    const result = await generate(mockSingleObjectSchema, 1);
+    const result = await generate(mockSingleObjectSchema, 1, 1);
 
     // Verifica se o resultado é um array com um único item.
     expect(Array.isArray(result)).toBe(true);

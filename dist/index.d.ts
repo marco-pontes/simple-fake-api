@@ -1,7 +1,7 @@
 import './bootstrap.js';
 export { create as http } from './http-client.js';
 export declare const __resetForTests: () => void;
-export declare const getCollections: () => object;
+export declare const getCollections: <T>() => T;
 /**
  * Inicializa a configuração e as rotas do servidor Simple Fake API.
  * Esta função prepara o servidor, mas não o inicia.

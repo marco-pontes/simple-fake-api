@@ -14,7 +14,7 @@ export const __resetForTests = () => {
   fastApi = null;
 };
 
-export const getCollections = () => fastApi!.collections;
+export const getCollections = <T>() => fastApi!.collections as T;
 
 /**
  * Inicializa a configuração e as rotas do servidor Simple Fake API.
@@ -44,7 +44,7 @@ export const initialize = async (): Promise<void> => {
     });
 
     // Mapeia as rotas do diretório da API.
-    const routeDefinitions = await mapRoutes(config.apiDir, config.wildcardChar, (config.routeFileExtension || 'js') as 'js' | 'ts');
+    const routeDefinitions = await mapRoutes(config.apiDir, config.wildcardChar, (config.routeFileExtension || 'js') as any);
     addExpressRoutes(app, routeDefinitions.literals, routeDefinitions.params);
 
     // Atribui a instância inicializada à variável global.
